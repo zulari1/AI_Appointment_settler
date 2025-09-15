@@ -1,0 +1,8 @@
+{
+  "name": "Zulari AI Command Center",
+  "description": "A professional SaaS platform for clients to manage enterprise-grade AI automation services, from customer support to lead generation.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "prompt": ""
+}
