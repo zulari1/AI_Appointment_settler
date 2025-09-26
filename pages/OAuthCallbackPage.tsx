@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import * as n8n from '../services/n8nService';
 import { ICONS } from '../constants';
+import { useIntegrations } from '../hooks/useIntegrations';
 
 const Spinner: React.FC = () => (
     <div className="flex justify-center items-center">
@@ -12,45 +13,110 @@ const Spinner: React.FC = () => (
     </div>
 );
 
-
 const OAuthCallbackPage: React.FC = () => {
-    const [searchParams] = useSearchParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const { refetch } = useIntegrations();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('Finalizing connection to Google...');
 
     useEffect(() => {
-        const code = searchParams.get('code');
-        const error = searchParams.get('error');
+        const processCode = async () => {
+            const params = new URLSearchParams(location.search);
+            const code = params.get('code');
+            const stateEncoded = params.get('state');
+            const error = params.get('error');
 
-        if (error) {
-            setStatus('error');
-            setMessage(`Authorization failed: ${error}. Redirecting...`);
-            setTimeout(() => navigate('/'), 4000);
-            return;
-        }
-        
-        if (code) {
-            n8n.postGoogleAuthCode(code)
-                .then(() => {
-                    localStorage.setItem('googleServicesConnected', 'true');
-                    // Dispatch a storage event to notify other tabs/components immediately
-                    window.dispatchEvent(new Event('storage')); 
-                    
+            // Debug logging
+            console.log('OAuth Callback received:', {
+                fullURL: window.location.href,
+                code: code ? 'Present' : 'Missing',
+                state: stateEncoded ? 'Present' : 'Missing',
+                error: error,
+                allParams: Object.fromEntries(params.entries())
+            });
+
+            // Handle OAuth error response
+            if (error) {
+                const errorDescription = params.get('error_description') || error;
+                setStatus('error');
+                setMessage(`Authorization failed: ${errorDescription}`);
+                return;
+            }
+
+            // Check for authorization code
+            if (!code) {
+                setStatus('error');
+                setMessage('No authorization code received from Google. Please try connecting again.');
+                return;
+            }
+
+            // Check for state parameter
+            if (!stateEncoded) {
+                setStatus('error');
+                setMessage('Missing state parameter. This might be a security issue or misconfiguration.');
+                console.error('State parameter missing - check OAuth initiation URL');
+                return;
+            }
+
+            try {
+                // Decode state
+                let state;
+                try {
+                    state = JSON.parse(atob(stateEncoded));
+                    console.log('Decoded state:', state);
+                } catch (decodeError) {
+                    console.error('Failed to decode state:', decodeError);
+                    setStatus('error');
+                    setMessage('Invalid state format received.');
+                    return;
+                }
+
+                // Validate state structure
+                if (!state.service || !state.integrationType || !state.userEmail) {
+                    console.error('Invalid state object:', state);
+                    setStatus('error');
+                    setMessage('Invalid callback state data.');
+                    return;
+                }
+
+                const webhookPayload = {
+                    action: 'collect_access',
+                    service: state.service,
+                    integration_type: state.integrationType,
+                    user_email: state.userEmail,
+                    code: code,
+                    redirect_uri: `${window.location.origin}/oauth.html`
+                };
+
+                console.log('Sending to webhook:', webhookPayload);
+                
+                const response = await n8n.postGoogleAuthCode(webhookPayload);
+                
+                if (Array.isArray(response) && response.length > 0 && response[0]?.status === 'success') {
+                    await refetch();
                     setStatus('success');
                     setMessage('Successfully connected! Your Google services are now integrated. Redirecting...');
-                    setTimeout(() => navigate('/'), 2500);
-                })
-                .catch(err => {
-                    localStorage.removeItem('googleServicesConnected');
-                    setStatus('error');
-                    setMessage(`Connection failed: ${err.message}. Please try again.`);
-                });
-        } else {
-            setStatus('error');
-            setMessage('Invalid callback state. No authorization code found.');
-        }
-    }, [searchParams, navigate]);
+                    
+                    if (state.service === 'Integrations') {
+                        setTimeout(() => navigate('/management/integrations'), 2500);
+                    } else {
+                        setTimeout(() => navigate(`/services/${state.service.toLowerCase().replace(/ /g, '-')}`), 2500);
+                    }
+                } else {
+                    const errorMessage = response[0]?.message || 'Webhook processing failed.';
+                    throw new Error(errorMessage);
+                }
+
+            } catch (err: any) {
+                console.error('OAuth processing error:', err);
+                setStatus('error');
+                setMessage(`Connection failed: ${err.message}`);
+            }
+        };
+
+        processCode();
+    }, [location.search, navigate, refetch]);
 
     const statusIcons = {
         loading: <Spinner />,
@@ -69,8 +135,11 @@ const OAuthCallbackPage: React.FC = () => {
                 </h2>
                 <p className="text-dark-text-secondary max-w-md">{message}</p>
                 {status === 'error' && (
-                     <Link to="/" className="mt-8 bg-brand-primary hover:bg-indigo-500 text-white font-bold py-2 px-6 rounded-lg transition-colors">
-                        Return to Dashboard
+                    <Link 
+                        to="/management/integrations" 
+                        className="mt-8 bg-brand-primary hover:bg-indigo-500 text-white font-bold py-2 px-6 rounded-lg transition-colors"
+                    >
+                        Return to Integrations
                     </Link>
                 )}
             </div>

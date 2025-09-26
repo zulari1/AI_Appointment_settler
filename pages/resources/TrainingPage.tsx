@@ -17,14 +17,8 @@ const parsePercent = (s: string = ''): number => {
 };
 const stripQuotes = (s: string = '') => s.replace(/^"+|"+$/g, '').trim();
 
-// --- Sub-components ---interface AnimatedCounterProps {
-  value: number;
-  prefix?: string;
-  suffix?: string;
-}
-
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = "", suffix = "" }) => {
+// --- Sub-components ---
+const AnimatedCounter: React.FC<{ value: number, prefix?: string, suffix?: string }> = ({ value, prefix = "", suffix = "" }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
     useEffect(() => {
         const controls = animate(animatedValue, value, {
@@ -34,12 +28,9 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = "", s
         return controls.stop;
     }, [value, animatedValue]);
     return <span>{prefix}{Math.round(animatedValue).toLocaleString()}{suffix}</span>;
-};interface HeaderBusinessImpactProps {
-  metrics: { totalRevenue: number, totalRuns: number, avgIq: number };
-}
+};
 
-
-const HeaderBusinessImpact: React.FC<HeaderBusinessImpactProps> = ({ metrics }) => (
+const HeaderBusinessImpact: React.FC<{ metrics: { totalRevenue: number, totalRuns: number, avgIq: number } }> = ({ metrics }) => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-dark-card border border-dark-border rounded-xl p-4 text-center">
             <p className="text-3xl font-bold text-green-400"><AnimatedCounter value={metrics.totalRevenue} prefix="$" /></p>
@@ -54,12 +45,9 @@ const HeaderBusinessImpact: React.FC<HeaderBusinessImpactProps> = ({ metrics }) 
             <p className="text-xs text-dark-text-secondary mt-1">Average AI Intelligence</p>
         </div>
     </div>
-);interface IQMeterProps {
-  iq: number;
-}
+);
 
-
-const IQMeter: React.FC<IQMeterProps> = ({ iq }) => (
+const IQMeter: React.FC<{ iq: number }> = ({ iq }) => (
     <div>
         <div className="flex justify-between items-baseline mb-1">
             <span className="text-xs font-semibold text-dark-text-secondary">Agent IQ</span>
@@ -67,12 +55,9 @@ const IQMeter: React.FC<IQMeterProps> = ({ iq }) => (
         </div>
         <div className="w-full bg-dark-bg h-2.5 rounded-full border border-dark-border"><motion.div className="bg-brand-primary h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${iq}%` }} /></div>
     </div>
-);interface DocumentListProps {
-  docs: UnifiedTrainingDoc[];
-}
+);
 
-
-const DocumentList: React.FC<DocumentListProps> = ({ docs }) => {
+const DocumentList: React.FC<{ docs: UnifiedTrainingDoc[] }> = ({ docs }) => {
     const statusPill = (status: string) => {
         const styles = {
             'Complete': 'bg-green-500/20 text-green-400',

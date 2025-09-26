@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { animate } from 'framer-motion';
-import { SupportKpis } from '../../utils/supportUtils';interface AnimatedCounterProps {
-  value: number;
-  suffix?: string;
-}
+import { SupportKpis } from '../../utils/supportUtils';
 
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, suffix = '' }) => {
+const AnimatedCounter: React.FC<{ value: number, suffix?: string }> = ({ value, suffix = '' }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
     useEffect(() => {
         const controls = animate(animatedValue, value, {
@@ -16,22 +12,16 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, suffix = '' })
         return () => controls.stop();
     }, [value, animatedValue]);
     return <span>{animatedValue.toLocaleString()}{suffix}</span>;
-};interface KpiCardProps {
-  label: string; children: React.ReactNode;
-}
+};
 
-
-const KpiCard: React.FC<KpiCardProps> = ({ label, children }) => (
+const KpiCard: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <div className="bg-dark-bg p-3 rounded-lg text-center">
         <p className="text-2xl font-bold text-white">{children}</p>
         <p className="text-xs text-dark-text-secondary">{label}</p>
     </div>
-);interface SupportKpiStripProps {
-  kpis: SupportKpis | null;
-}
+);
 
-
-const SupportKpiStrip: React.FC<SupportKpiStripProps> = ({ kpis }) => {
+const SupportKpiStrip: React.FC<{ kpis: SupportKpis | null }> = ({ kpis }) => {
     if (!kpis) {
         return <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[...Array(3)].map((_, i) => <div key={i} className="bg-dark-bg p-3 rounded-lg h-[68px] animate-pulse"></div>)}

@@ -14,12 +14,9 @@ const TypingIndicator: React.FC = () => (
         <span className="h-2 w-2 bg-brand-primary rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></span>
         <span className="h-2 w-2 bg-brand-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></span>
     </div>
-);interface MessageBubbleProps {
-  msg: ChatMessage;
-}
+);
 
-
-const MessageBubble: React.FC<MessageBubbleProps> = ({ msg }) => {
+const MessageBubble: React.FC<{ msg: ChatMessage }> = ({ msg }) => {
     const [copied, setCopied] = useState(false);
     const handleCopy = () => {
         navigator.clipboard.writeText(msg.text);

@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { animate } from 'framer-motion';
-import { ReplierKpis } from '../../types';interface AnimatedCounterProps {
-  value: number;
-  suffix?: string;
-}
+import { ReplierKpis } from '../../types';
 
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, suffix = '' }) => {
+const AnimatedCounter: React.FC<{ value: number, suffix?: string }> = ({ value, suffix = '' }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
     useEffect(() => {
         const controls = animate(animatedValue, value, {
@@ -16,23 +12,16 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, suffix = '' })
         return () => controls.stop();
     }, [value, animatedValue]);
     return <span>{animatedValue.toLocaleString()}{suffix}</span>;
-};interface KpiCardProps {
-  label: string;
-  children: React.ReactNode;
-}
+};
 
-
-const KpiCard: React.FC<KpiCardProps> = ({ label, children }) => (
+const KpiCard: React.FC<{ label: string, children: React.ReactNode }> = ({ label, children }) => (
     <div className="bg-dark-bg p-2 rounded-lg">
         <p className="text-xl font-bold text-white">{children}</p>
         <p className="text-xs text-dark-text-secondary">{label}</p>
     </div>
-);interface ReplierKPIProps {
-  kpis: ReplierKpis | null;
-}
+);
 
-
-const ReplierKPI: React.FC<ReplierKPIProps> = ({ kpis }) => {
+const ReplierKPI: React.FC<{ kpis: ReplierKpis | null }> = ({ kpis }) => {
     if (!kpis) return <div className="h-16 w-full bg-dark-bg rounded-lg animate-pulse" />;
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">

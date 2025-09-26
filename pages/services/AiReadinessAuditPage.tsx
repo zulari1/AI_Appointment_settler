@@ -65,13 +65,9 @@ const ReportCard: React.FC<{ report: PreviousAuditReport, onView: () => void }> 
             View Full Report →
         </button>
     </div>
-);interface ProgressBarProps {
-  steps: string[];
-  currentStep: number;
-}
+);
 
-
-const ProgressBar: React.FC<ProgressBarProps> = ({ steps, currentStep }) => {
+const ProgressBar: React.FC<{ steps: string[], currentStep: number }> = ({ steps, currentStep }) => {
     return (
         <div className="flex items-center justify-between gap-2 text-xs font-semibold text-dark-text-secondary">
             {steps.map((step, index) => {
@@ -92,12 +88,9 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ steps, currentStep }) => {
             })}
         </div>
     );
-};interface StepWrapperProps {
-  children: ReactNode;
-}
+};
 
-
-const StepWrapper: React.FC<StepWrapperProps> = ({ children }) => (
+const StepWrapper: React.FC<{ children: ReactNode }> = ({ children }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -107,24 +100,16 @@ const StepWrapper: React.FC<StepWrapperProps> = ({ children }) => (
     >
         {children}
     </motion.div>
-);interface AIInsightCardProps {
-  title: string;
-  text: string;
-}
+);
 
-
-const AIInsightCard: React.FC<AIInsightCardProps> = ({ title, text }) => (
+const AIInsightCard: React.FC<{ title: string, text: string }> = ({ title, text }) => (
      <div className="bg-dark-bg border border-dark-border rounded-xl p-4 mt-6">
         <p className="font-semibold text-brand-accent flex items-center gap-2">💡 {title}</p>
         <p className="text-sm text-dark-text-secondary mt-1">{text}</p>
     </div>
-);interface Step1_BusinessProfileProps {
-  data: AuditFormData;
-  update: Function;
-}
+);
 
-
-const Step1_BusinessProfile: React.FC<Step1_BusinessProfileProps> = ({ data, update }) => (
+const Step1_BusinessProfile: React.FC<{ data: AuditFormData, update: Function }> = ({ data, update }) => (
     <div className="space-y-4 max-w-lg mx-auto">
         <h2 className="text-2xl font-bold text-center text-white">Step 1: Business Profile</h2>
         <input type="text" value={data.company} onChange={e => update('company', e.target.value)} required placeholder="Company Name" className="w-full bg-dark-bg border border-dark-border rounded-lg p-3" />
@@ -134,13 +119,9 @@ const Step1_BusinessProfile: React.FC<Step1_BusinessProfileProps> = ({ data, upd
         <select value={data.businessModel} onChange={e => update('businessModel', e.target.value)} className="w-full bg-dark-bg border border-dark-border rounded-lg p-3"><option>B2B</option><option>B2C</option><option>Hybrid</option></select>
         <AIInsightCard title="Building Context" text="This information gives our AI a clear picture of your business, ensuring the audit is tailored to your specific industry and scale." />
     </div>
-);interface Step2_ChallengesProps {
-  data: AuditFormData;
-  update: Function;
-}
+);
 
-
-const Step2_Challenges: React.FC<Step2_ChallengesProps> = ({ data, update }) => (
+const Step2_Challenges: React.FC<{ data: AuditFormData, update: Function }> = ({ data, update }) => (
     <div className="space-y-4 max-w-lg mx-auto">
         <h2 className="text-2xl font-bold text-center text-white">Step 2: Challenges & Pain Points</h2>
         <select value={data.primaryChallenge} onChange={e => update('primaryChallenge', e.target.value)} className="w-full bg-dark-bg border border-dark-border rounded-lg p-3">
@@ -149,13 +130,9 @@ const Step2_Challenges: React.FC<Step2_ChallengesProps> = ({ data, update }) => 
         <textarea value={data.problemDescription} onChange={e => update('problemDescription', e.target.value)} required rows={4} placeholder="Describe the problem in your own words..." className="w-full bg-dark-bg border border-dark-border rounded-lg p-3" />
         <AIInsightCard title="Capturing the 'Why'" text="Defining the core problem helps us focus the AI analysis on solutions that deliver the most impactful results for your team." />
     </div>
-);interface Step3_CurrentSetupProps {
-  data: AuditFormData;
-  update: Function;
-}
+);
 
-
-const Step3_CurrentSetup: React.FC<Step3_CurrentSetupProps> = ({ data, update }) => (
+const Step3_CurrentSetup: React.FC<{ data: AuditFormData, update: Function }> = ({ data, update }) => (
     <div className="space-y-4 max-w-lg mx-auto">
         <h2 className="text-2xl font-bold text-center text-white">Step 3: Current Setup & Resources</h2>
         <input type="text" value={data.currentTools.join(', ')} onChange={e => update('currentTools', e.target.value.split(',').map(t => t.trim()))} placeholder="Current Tools (e.g., Slack, HubSpot)" className="w-full bg-dark-bg border border-dark-border rounded-lg p-3" />
@@ -163,13 +140,9 @@ const Step3_CurrentSetup: React.FC<Step3_CurrentSetupProps> = ({ data, update })
         <div><label className="text-sm text-dark-text-secondary mb-1 block">Time Spent per Week (hours): {data.timeSpentWeekly}</label><input type="range" min="1" max="100" value={data.timeSpentWeekly} onChange={e => update('timeSpentWeekly', +e.target.value)} className="w-full" /></div>
         <AIInsightCard title="Mapping Resources" text="Understanding your tech stack and resource investment helps our AI identify low-hanging fruit for automation and suggest realistic solutions." />
     </div>
-);interface Step4_SuccessMetricsProps {
-  data: AuditFormData;
-  update: Function;
-}
+);
 
-
-const Step4_SuccessMetrics: React.FC<Step4_SuccessMetricsProps> = ({ data, update }) => (
+const Step4_SuccessMetrics: React.FC<{ data: AuditFormData, update: Function }> = ({ data, update }) => (
     <div className="space-y-4 max-w-lg mx-auto">
         <h2 className="text-2xl font-bold text-center text-white">Step 4: Defining Success</h2>
         <input type="number" value={data.hoursSavedTarget || ''} onChange={e => update('hoursSavedTarget', +e.target.value)} placeholder="Target Hours Saved per Week" className="w-full bg-dark-bg border border-dark-border rounded-lg p-3" />
@@ -177,13 +150,9 @@ const Step4_SuccessMetrics: React.FC<Step4_SuccessMetricsProps> = ({ data, updat
         <input type="text" value={data.customKpiName} onChange={e => update('customKpiName', e.target.value)} placeholder="Custom KPI Name (e.g., Error Rate)" className="w-full bg-dark-bg border border-dark-border rounded-lg p-3" />
         <AIInsightCard title="Clear KPIs = Measurable Outcomes" text="Even a best guess helps us generate a solution with tangible results. We'll refine these goals together." />
     </div>
-);interface Step5_ReadinessProps {
-  data: AuditFormData;
-  update: Function;
-}
+);
 
-
-const Step5_Readiness: React.FC<Step5_ReadinessProps> = ({ data, update }) => (
+const Step5_Readiness: React.FC<{ data: AuditFormData, update: Function }> = ({ data, update }) => (
     <div className="space-y-4 max-w-lg mx-auto">
         <h2 className="text-2xl font-bold text-center text-white">Step 5: AI Readiness & Consent</h2>
         <label className="flex items-start gap-3 p-3 bg-dark-bg rounded-lg cursor-pointer"><input type="checkbox" checked={data.consentToCrawl} onChange={e => update('consentToCrawl', e.target.checked)} required className="mt-1 h-4 w-4" /><div><span className="font-semibold text-white">I consent to automated analysis</span><p className="text-xs text-dark-text-secondary">This allows our AI to crawl your public website for data. Private credentials will never be requested.</p></div></label>

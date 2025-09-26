@@ -1,21 +1,14 @@
 
 
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, animate } from 'framer-motion';
 import * as n8n from '../../../services/n8nService';
 import * as replierService from '../../../services/replierService';
 import { calcKPIs, deriveRow } from '../../../utils/replierUtils';
-import { ICONS } from '../../../constants';interface AnimatedCounterProps {
-  value: number;
-  suffix?: string;
-  prefix?: string;
-}
+import { ICONS } from '../../../constants';
 
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, suffix = '', prefix = '' }) => {
+const AnimatedCounter: React.FC<{ value: number, suffix?: string, prefix?: string }> = ({ value, suffix = '', prefix = '' }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
 
     useEffect(() => {
@@ -28,12 +21,9 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, suffix = '', p
     }, [value, animatedValue]);
 
     return <span>{prefix}{animatedValue.toLocaleString()}{suffix}</span>;
-};interface ProgressRingProps {
-  percentage: number;
-}
+};
 
-
-const ProgressRing: React.FC<ProgressRingProps> = ({ percentage }) => {
+const ProgressRing: React.FC<{ percentage: number }> = ({ percentage }) => {
     const radius = 24;
     const circumference = 2 * Math.PI * radius;
     const [animatedPercentage, setAnimatedPercentage] = useState(0);
@@ -105,14 +95,8 @@ const PipelineDiagram: React.FC = () => {
     );
 };
 
-// FIX: Change `icon` prop type from `React.ReactNode` to `React.ReactElement` for type safety with cloneElement.interface KpiCardProps {
-  label: string;
-  value: number;
-  icon: React.ReactElement;
-}
-
-
-const KpiCard: React.FC<KpiCardProps> = ({ label, value, icon }) => (
+// FIX: Change `icon` prop type from `React.ReactNode` to `React.ReactElement` for type safety with cloneElement.
+const KpiCard: React.FC<{ label: string, value: number, icon: React.ReactElement }> = ({ label, value, icon }) => (
     <div className="bg-dark-bg border border-dark-border rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-dark-text-secondary">{label}</p>
@@ -121,12 +105,9 @@ const KpiCard: React.FC<KpiCardProps> = ({ label, value, icon }) => (
         </div>
         <p className="text-3xl font-bold text-white"><AnimatedCounter value={value} /></p>
     </div>
-);interface UnifiedMetricsDashboardProps {
-  kpis: any;
-}
+);
 
-
-const UnifiedMetricsDashboard: React.FC<UnifiedMetricsDashboardProps> = ({ kpis }) => {
+const UnifiedMetricsDashboard: React.FC<{ kpis: any }> = ({ kpis }) => {
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <KpiCard label="Leads Found" value={kpis.found} icon={ICONS.leads} />
@@ -142,12 +123,9 @@ const UnifiedMetricsDashboard: React.FC<UnifiedMetricsDashboardProps> = ({ kpis 
             </div>
         </div>
     );
-};interface FunnelTableProps {
-  kpis: any;
-}
+};
 
-
-const FunnelTable: React.FC<FunnelTableProps> = ({ kpis }) => {
+const FunnelTable: React.FC<{ kpis: any }> = ({ kpis }) => {
     const totalLeads = kpis.found || 1;
     const funnelSteps = [
         { name: 'Leads Found', count: kpis.found, conversion: 100 },
@@ -199,15 +177,9 @@ const HowItWorksSection: React.FC = () => {
             </div>
         </div>
     );
-};interface AgentCTAProps {
-  to: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}
+};
 
-
-const AgentCTA: React.FC<AgentCTAProps> = ({ to, title, description, icon }) => (
+const AgentCTA: React.FC<{ to: string, title: string, description: string, icon: React.ReactNode }> = ({ to, title, description, icon }) => (
     <Link to={to} className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-brand-primary transition-colors group animate-fade-in flex flex-col justify-between">
         <div>
             <div className="flex items-center gap-4 mb-3">

@@ -1,150 +1,139 @@
-import React, { useState, useEffect, FormEvent } from 'react';
-import * as n8n from '../../services/n8nService';
-import { ICONS } from '../../constants';
+
+import React from 'react';
+import { useIntegrations } from '../../hooks/useIntegrations';
 import SubPageHeader from '../../components/SubPageHeader';
 import GmailConnectPrompt from '../../components/GmailConnectPrompt';
-import ActionNotification from '../../components/ActionNotification';
-import { CRMPlatform } from '../../types';
-
-const CRM_CREDS_STORAGE_KEY = 'zulari-crm-credentials';interface SpinnerProps {
-  button?: boolean;
-}
-
-
-const Spinner: React.FC<SpinnerProps> = ({ button = false }) => (
-    <svg className={`animate-spin ${button ? 'h-5 w-5' : 'h-8 w-8'} text-white`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-);
+import { ICONS } from '../../constants';
+// FIX: Removed `parseISO` as it's not a consistently available export. `new Date()` handles ISO strings correctly.
+import { format } from 'date-fns';
+import { VITE_GMAIL_CLIENT_ID } from '../../env';
+import { Integration } from '../../types';
 
 const IntegrationsPage: React.FC = () => {
-    const user = { email: 'demo@zulari.app' };
-    const [isGoogleConnected, setIsGoogleConnected] = useState(false);
-    const [crmCreds, setCrmCreds] = useState<{ platform: CRMPlatform; apiKey: string } | null>(null);
-    const [showCrmForm, setShowCrmForm] = useState(false);
-    const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+    const { integrations, loading, error, refetch } = useIntegrations();
+    const userEmail = 'demo@zulari.app'; // Hardcoded for demo
 
-    // CRM Form State
-    const [platform, setPlatform] = useState<CRMPlatform>('shopify');
-    const [apiKey, setApiKey] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
-    
-    useEffect(() => {
-        const checkConnections = () => {
-            setIsGoogleConnected(localStorage.getItem('googleServicesConnected') === 'true');
-            const storedCreds = localStorage.getItem(CRM_CREDS_STORAGE_KEY);
-            if (storedCreds) {
-                setCrmCreds(JSON.parse(storedCreds));
-                setShowCrmForm(false);
-            }
+    const startOAuth = (serviceName: string, integrationType: Integration['integration_type']) => {
+        const state = {
+            userEmail,
+            service: serviceName,
+            integrationType,
+            timestamp: Date.now(),
+            nonce: Math.random().toString(36).substring(7),
         };
-        checkConnections();
-        window.addEventListener('storage', checkConnections);
-        return () => window.removeEventListener('storage', checkConnections);
-    }, []);
+        const stateEncoded = btoa(JSON.stringify(state));
 
-    const handleGoogleDisconnect = () => {
-        localStorage.removeItem('googleServicesConnected');
-        setIsGoogleConnected(false);
-        setNotification({ type: 'success', message: 'Disconnected from Google.' });
+        const scopes = [
+            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/calendar"
+        ].join(" ");
+        
+        const redirectUri = `${window.location.origin}/oauth.html`;
+
+        const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+        authUrl.searchParams.set('client_id', VITE_GMAIL_CLIENT_ID);
+        authUrl.searchParams.set('redirect_uri', redirectUri);
+        authUrl.searchParams.set('response_type', 'code');
+        authUrl.searchParams.set('scope', scopes);
+        authUrl.searchParams.set('access_type', 'offline');
+        authUrl.searchParams.set('prompt', 'consent');
+        authUrl.searchParams.set('state', stateEncoded);
+
+        window.location.href = authUrl.toString();
     };
 
-    const handleCrmDisconnect = () => {
-        localStorage.removeItem(CRM_CREDS_STORAGE_KEY);
-        setCrmCreds(null);
-        setApiKey('');
-        setNotification({ type: 'success', message: 'Disconnected from CRM.' });
+    const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+        const styles: { [key: string]: string } = {
+            'Connected': 'bg-green-500/20 text-green-400',
+            'Disconnected': 'bg-red-500/20 text-red-400',
+            'Expired': 'bg-amber-500/20 text-amber-400',
+            'Error': 'bg-red-500/20 text-red-400',
+        };
+        return <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${styles[status] || 'bg-gray-500/20 text-gray-400'}`}>{status}</span>;
     };
 
-    const handleSaveAndConnectCrm = async (e: FormEvent) => {
-        e.preventDefault();
-        if (!apiKey) return;
-        setIsSaving(true);
-        setNotification(null);
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'N/A';
         try {
-            await n8n.saveCRMCredentials({ platform, api_key: apiKey, user_email: user.email });
-            const newCreds = { platform, apiKey };
-            localStorage.setItem(CRM_CREDS_STORAGE_KEY, JSON.stringify(newCreds));
-            setCrmCreds(newCreds);
-            setShowCrmForm(false);
-            setNotification({ message: 'CRM connected successfully!', type: 'success' });
-        } catch (err: any) {
-            setNotification({ message: err.message || "Failed to save CRM credentials.", type: 'error' });
-        } finally {
-            setIsSaving(false);
+            // FIX: Replaced `parseISO` with the native `new Date()` constructor, which reliably handles ISO strings.
+            return format(new Date(dateString), "MMM d, yyyy 'at' h:mm a");
+        } catch (e) {
+            return dateString;
         }
     };
+
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <SubPageHeader title="Integrations" icon={ICONS.integrations} />
+                <div className="text-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto"></div>
+                    <p className="mt-4 text-dark-text-secondary">Loading integrations...</p>
+                </div>
+            </div>
+        );
+    }
     
-    if (!isGoogleConnected) {
+    if (error) {
         return (
              <div className="space-y-6">
-                 <SubPageHeader title="Integrations" icon={ICONS.integrations} />
-                 <GmailConnectPrompt service="gmail" />
-             </div>
+                <SubPageHeader title="Integrations" icon={ICONS.integrations} />
+                <div className="bg-red-900/50 border border-red-700 text-red-300 p-4 rounded-lg">
+                    <p><strong>Error:</strong> {error}</p>
+                    <button onClick={refetch} className="mt-2 text-white underline">Try again</button>
+                </div>
+            </div>
         )
+    }
+
+    if (integrations.length === 0) {
+        return (
+            <div className="space-y-6">
+                <SubPageHeader title="Integrations" icon={ICONS.integrations} />
+                <div className="bg-dark-card border border-dark-border rounded-xl p-6">
+                    <GmailConnectPrompt service="gmail" />
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="space-y-6">
-            {notification && <ActionNotification message={notification.message} type={notification.type} />}
             <SubPageHeader title="Integrations" icon={ICONS.integrations} />
-            <div className="space-y-6">
-                {/* Google Workspace */}
-                <div className="bg-dark-card border border-dark-border rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        {React.cloneElement(ICONS.gmail, { className: "h-10 w-10 text-brand-accent"})}
-                        <div>
-                            <h3 className="text-lg font-bold text-white">Google Workspace</h3>
-                            <p className="text-sm text-dark-text-secondary">Gmail, Calendar, and Drive are connected.</p>
-                        </div>
-                    </div>
-                    <button onClick={handleGoogleDisconnect} className="bg-red-500/20 text-red-300 hover:bg-red-500/40 font-bold py-2 px-4 rounded-lg text-sm">
-                        Disconnect
-                    </button>
-                </div>
-                
-                {/* CRM */}
-                <div className="bg-dark-card border border-dark-border rounded-xl p-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            {React.cloneElement(ICONS.crm, { className: "h-10 w-10 text-brand-accent"})}
-                             <div>
-                                <h3 className="text-lg font-bold text-white">CRM</h3>
-                                {crmCreds ? (
-                                    <p className="text-sm text-dark-text-secondary">Connected to {crmCreds.platform}.</p>
-                                ) : (
-                                    <p className="text-sm text-dark-text-secondary">Connect your e-commerce platform.</p>
-                                )}
-                            </div>
-                        </div>
-                        {crmCreds ? (
-                             <button onClick={handleCrmDisconnect} className="bg-red-500/20 text-red-300 hover:bg-red-500/40 font-bold py-2 px-4 rounded-lg text-sm">
-                                Disconnect
-                            </button>
-                        ) : (
-                             <button onClick={() => setShowCrmForm(s => !s)} className="bg-brand-primary hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg text-sm">
-                                {showCrmForm ? 'Cancel' : 'Connect'}
-                            </button>
-                        )}
-                    </div>
-                    {showCrmForm && !crmCreds && (
-                        <form onSubmit={handleSaveAndConnectCrm} className="space-y-4 mt-6 border-t border-dark-border pt-6">
-                            <div>
-                                <label htmlFor="platform" className="block text-sm font-medium text-dark-text-secondary mb-1">CRM Platform</label>
-                                <select id="platform" value={platform} onChange={e => setPlatform(e.target.value as CRMPlatform)} className="w-full bg-dark-bg border border-dark-border rounded-lg p-2.5">
-                                    <option value="shopify">Shopify</option> <option value="woocommerce">WooCommerce</option> <option value="bigcommerce">BigCommerce</option> <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label htmlFor="apiKey" className="block text-sm font-medium text-dark-text-secondary mb-1">API Key / Access Token</label>
-                                <input id="apiKey" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="••••••••••••••••••••••••" className="w-full bg-dark-bg border border-dark-border rounded-lg p-2.5" />
-                            </div>
-                            <button type="submit" disabled={isSaving} className="w-full flex justify-center items-center bg-brand-primary hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-lg disabled:bg-slate-600">
-                                {isSaving ? <Spinner button /> : 'Save & Connect'}
-                            </button>
-                        </form>
-                    )}
+            <div className="bg-dark-card border border-dark-border rounded-xl p-4 md:p-6">
+                <h2 className="text-xl font-bold text-white mb-4">Connected Services</h2>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-dark-text-secondary uppercase bg-dark-bg">
+                            <tr>
+                                <th className="px-4 py-3">Service</th>
+                                <th className="px-4 py-3">Type</th>
+                                <th className="px-4 py-3">Account</th>
+                                <th className="px-4 py-3">Status</th>
+                                <th className="px-4 py-3">Last Verified</th>
+                                <th className="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-dark-border">
+                            {integrations.map((integ, idx) => (
+                                <tr key={idx} className="hover:bg-dark-bg/50">
+                                    <td className="px-4 py-3 font-medium text-white">{integ.service_name}</td>
+                                    <td className="px-4 py-3">{integ.integration_type}</td>
+                                    <td className="px-4 py-3">{integ.account_email}</td>
+                                    <td className="px-4 py-3"><StatusBadge status={integ.status} /></td>
+                                    <td className="px-4 py-3">{formatDate(integ.last_verified)}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => startOAuth(integ.service_name, integ.integration_type)} className="text-xs bg-dark-border hover:bg-brand-primary px-3 py-1 rounded">Reconnect</button>
+                                            <button className="text-xs bg-dark-border hover:bg-red-500/50 px-3 py-1 rounded">Disconnect</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

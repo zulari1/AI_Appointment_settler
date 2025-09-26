@@ -7,15 +7,9 @@ import { DashboardUser, RoiJob } from '../../types';
 import ActionNotification from '../../components/ActionNotification';
 import { safeNum } from '../../utils/safeUtils';
 import { format, differenceInMilliseconds } from 'date-fns';
-import ServiceCard from '../../components/ServiceCard';interface AnimatedCounterProps {
-  value: number;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
-}
+import ServiceCard from '../../components/ServiceCard';
 
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = '', suffix = '', decimals = 0 }) => {
+const AnimatedCounter: React.FC<{ value: number, prefix?: string, suffix?: string, decimals?: number }> = ({ value, prefix = '', suffix = '', decimals = 0 }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
 
     useEffect(() => {
@@ -28,13 +22,9 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = '', s
     }, [value, animatedValue]);
 
     return <span>{prefix}{safeNum(animatedValue, decimals)}{suffix}</span>;
-};interface ProgressRingProps {
-  percentage: number;
-  color: string;
-}
+};
 
-
-const ProgressRing: React.FC<ProgressRingProps> = ({ percentage, color }) => {
+const ProgressRing: React.FC<{ percentage: number, color: string }> = ({ percentage, color }) => {
     const radius = 30;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
@@ -63,13 +53,9 @@ const ProgressRing: React.FC<ProgressRingProps> = ({ percentage, color }) => {
             </div>
         </div>
     );
-};interface SparkLineProps {
-  data: number[];
-  colorClass: string;
-}
+};
 
-
-const SparkLine: React.FC<SparkLineProps> = ({ data, colorClass }) => {
+const SparkLine: React.FC<{ data: number[], colorClass: string }> = ({ data, colorClass }) => {
   if (data.length < 2) return <div className="h-6 w-full bg-dark-bg/50 rounded" />;
   const width = 100;
   const height = 24;
@@ -83,13 +69,9 @@ const SparkLine: React.FC<SparkLineProps> = ({ data, colorClass }) => {
       <polyline fill="none" strokeWidth="2" points={points} />
     </svg>
   );
-};interface TopRoiMetricsProps {
-  roiData: RoiJob[];
-  dashboardData: DashboardUser | null;
-}
+};
 
-
-const TopRoiMetrics: React.FC<TopRoiMetricsProps> = ({ roiData, dashboardData }) => {
+const TopRoiMetrics: React.FC<{ roiData: RoiJob[], dashboardData: DashboardUser | null }> = ({ roiData, dashboardData }) => {
     const latestRoi = roiData.length > 0 ? roiData[0] : null;
     const totalRoi = latestRoi ? parseInt(latestRoi.total_roi_percent.replace('%', '')) : 0;
     const revenueGrowth = latestRoi ? latestRoi.revenue_upside : 0;
@@ -147,13 +129,9 @@ const ServiceUsageAnalytics: React.FC<{ data: DashboardUser | null, onRerun: (se
             </div>
         </div>
     );
-};interface PerformancePanelProps {
-  roiData: RoiJob[];
-  dashboardData: DashboardUser | null;
-}
+};
 
-
-const PerformancePanel: React.FC<PerformancePanelProps> = ({ roiData, dashboardData }) => {
+const PerformancePanel: React.FC<{ roiData: RoiJob[], dashboardData: DashboardUser | null }> = ({ roiData, dashboardData }) => {
     const successRate = ((dashboardData?.roi_runs || 0) / (dashboardData?.total_simulations || 1)) * 100;
     const avgProcessingTime = useMemo(() => {
         if (roiData.length === 0) return 0;
@@ -184,13 +162,9 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ roiData, dashboardD
             </div>
         </div>
     );
-};interface TrustBuildingZoneProps {
-  roiData: RoiJob[];
-  dashboardData: DashboardUser | null;
-}
+};
 
-
-const TrustBuildingZone: React.FC<TrustBuildingZoneProps> = ({ roiData, dashboardData }) => {
+const TrustBuildingZone: React.FC<{ roiData: RoiJob[], dashboardData: DashboardUser | null }> = ({ roiData, dashboardData }) => {
     const latestRoi = roiData.length > 0 ? roiData[0] : null;
     const achievements = [
         { name: 'Revenue Optimizer', unlocked: latestRoi && parseInt(latestRoi.total_roi_percent) > 20 },
@@ -215,12 +189,9 @@ const TrustBuildingZone: React.FC<TrustBuildingZoneProps> = ({ roiData, dashboar
             </div>
         </div>
     );
-};interface NudgeCardsProps {
-  roiData: RoiJob[];
-}
+};
 
-
-const NudgeCards: React.FC<NudgeCardsProps> = ({ roiData }) => {
+const NudgeCards: React.FC<{ roiData: RoiJob[] }> = ({ roiData }) => {
     const latestRoi = roiData.length > 0 ? roiData[0] : null;
     const showTopPerformer = latestRoi && parseInt(latestRoi.total_roi_percent) > 200;
     
@@ -235,12 +206,9 @@ const NudgeCards: React.FC<NudgeCardsProps> = ({ roiData }) => {
             )}
         </AnimatePresence>
     );
-};interface NextStepsCtaZoneProps {
-  roiData: RoiJob[];
-}
+};
 
-
-const NextStepsCtaZone: React.FC<NextStepsCtaZoneProps> = ({ roiData }) => {
+const NextStepsCtaZone: React.FC<{ roiData: RoiJob[] }> = ({ roiData }) => {
     const latestRoi = roiData.length > 0 ? roiData[0] : null;
     return (
          <div className="bg-dark-card border border-dark-border rounded-xl p-6 space-y-3">

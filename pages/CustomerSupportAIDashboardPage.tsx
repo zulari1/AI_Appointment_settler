@@ -11,16 +11,11 @@ import SupportList from '../components/support/SupportList';
 import SupportDetailDrawer from '../components/support/SupportDetailDrawer';
 import SettingsModal from '../components/support/SettingsModal';
 import { SupportRow, Status, Filter, UnifiedTrainingDoc, AddTrainingDocResponse, SupportChaosMetrics, EscalationRules, WebAITrainingDoc } from '../types';
+import IntegrationBanner from '../components/IntegrationBanner';
 
-type View = 'inbox' | 'training';interface AnimatedCounterProps {
-  value: number;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
-}
+type View = 'inbox' | 'training';
 
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = '', suffix = '', decimals = 0 }) => {
+const AnimatedCounter: React.FC<{ value: number, prefix?: string, suffix?: string, decimals?: number }> = ({ value, prefix = '', suffix = '', decimals = 0 }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
 
     useEffect(() => {
@@ -310,14 +305,7 @@ const CustomerSupportAIDashboardPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        fetchData(); // Initial fetch
-        const intervalId = setInterval(() => {
-            if (!document.hidden) {
-                fetchData();
-            }
-        }, 600000); // Poll every 10 minutes
-
-        return () => clearInterval(intervalId);
+        fetchData();
     }, [fetchData]);
 
     const handleAction = async (action: 'approve' | 'escalate', row: SupportRow, notes?: string) => {
@@ -392,57 +380,59 @@ const CustomerSupportAIDashboardPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {notification && <ActionNotification message={notification.message} type={notification.type} />}
-            <SupportHero 
-                kpis={kpis}
-                loading={loading}
-                onSync={fetchData}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-            />
-            
-            <div className="flex items-center justify-between">
-                <SupportFiltersBar activeFilter={filter} setFilter={setFilter} />
-                <div className="flex items-center gap-2 p-1 bg-dark-card rounded-lg border border-dark-border">
-                     <button onClick={() => setView('inbox')} className={`px-3 py-1 text-sm rounded-md ${view === 'inbox' ? 'bg-brand-primary' : ''}`}>Inbox</button>
-                     <button onClick={() => setView('training')} className={`px-3 py-1 text-sm rounded-md ${view === 'training' ? 'bg-brand-primary' : ''}`}>Training</button>
+             <IntegrationBanner serviceName="Support AI" required={['Gmail']}>
+                {notification && <ActionNotification message={notification.message} type={notification.type} />}
+                <SupportHero 
+                    kpis={kpis}
+                    loading={loading}
+                    onSync={fetchData}
+                    onOpenSettings={() => setIsSettingsOpen(true)}
+                />
+                
+                <div className="flex items-center justify-between">
+                    <SupportFiltersBar activeFilter={filter} setFilter={setFilter} />
+                    <div className="flex items-center gap-2 p-1 bg-dark-card rounded-lg border border-dark-border">
+                        <button onClick={() => setView('inbox')} className={`px-3 py-1 text-sm rounded-md ${view === 'inbox' ? 'bg-brand-primary' : ''}`}>Inbox</button>
+                        <button onClick={() => setView('training')} className={`px-3 py-1 text-sm rounded-md ${view === 'training' ? 'bg-brand-primary' : ''}`}>Training</button>
+                    </div>
                 </div>
-            </div>
 
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={view}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                >
-                    {view === 'inbox' ? (
-                         <SupportList
-                            loading={loading}
-                            error={error}
-                            groupedRows={groupedRows}
-                            onSelectRow={setSelectedRow}
-                            onRetry={fetchData}
-                         />
-                    ) : (
-                        <SupportAITrainingView />
-                    )}
-                </motion.div>
-            </AnimatePresence>
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={view}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {view === 'inbox' ? (
+                            <SupportList
+                                loading={loading}
+                                error={error}
+                                groupedRows={groupedRows}
+                                onSelectRow={setSelectedRow}
+                                onRetry={fetchData}
+                            />
+                        ) : (
+                            <SupportAITrainingView />
+                        )}
+                    </motion.div>
+                </AnimatePresence>
 
-            <SupportDetailDrawer
-                row={selectedRow}
-                onClose={() => setSelectedRow(null)}
-                onAction={handleAction}
-            />
-            
-            <SettingsModal
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-            />
-             <footer className="text-center text-xs text-dark-text-secondary mt-4">
-                Only your sheet data is used. We never send customer data anywhere except the training & settings webhooks you explicitly call.
-            </footer>
+                <SupportDetailDrawer
+                    row={selectedRow}
+                    onClose={() => setSelectedRow(null)}
+                    onAction={handleAction}
+                />
+                
+                <SettingsModal
+                    isOpen={isSettingsOpen}
+                    onClose={() => setIsSettingsOpen(false)}
+                />
+                <footer className="text-center text-xs text-dark-text-secondary mt-4">
+                    Only your sheet data is used. We never send customer data anywhere except the training & settings webhooks you explicitly call.
+                </footer>
+            </IntegrationBanner>
         </div>
     );
 };

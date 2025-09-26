@@ -9,14 +9,9 @@ interface SupportDetailDrawerProps {
     row: SupportRow | null;
     onClose: () => void;
     onAction: (action: "approve" | "escalate", row: SupportRow, notes?: string) => void;
-}interface DetailSectionProps {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
 }
 
-
-const DetailSection: React.FC<DetailSectionProps> = ({ title, children, defaultOpen = true }) => (
+const DetailSection: React.FC<{ title: string, children: React.ReactNode, defaultOpen?: boolean }> = ({ title, children, defaultOpen = true }) => (
     <details className="py-2 border-b border-dark-border last:border-b-0" open={defaultOpen}>
         <summary className="font-semibold text-white cursor-pointer list-none flex justify-between items-center">
             {title}

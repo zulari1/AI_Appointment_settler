@@ -1,26 +1,17 @@
-
-
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, animate } from 'framer-motion';
+import React, { useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ICONS } from '../constants';
 import { ResearchReport } from '../types';
 import * as researchService from '../services/n8nService';
 import ActionNotification from '../components/ActionNotification';
-import DOMPurify from 'dompurify';
 import InfoTooltip from '../components/InfoTooltip';
 
 type ResearchMode = 'competitor_analysis' | 'website_audit' | 'keyword_research';
-type JobStatus = 'idle' | 'queued' | 'processing' | 'completed' | 'failed';
+type PageStatus = 'idle' | 'processing' | 'completed' | 'failed';
 
-// --- FORM COMPONENTS (as per new blueprint) ---interface FormFieldProps {
-  label: string;
-  children: React.ReactNode;
-  required?: boolean;
-  hint?: string;
-}
+// --- Reusable UI Components ---
 
-
-const FormField: React.FC<FormFieldProps> = ({ label, children, required, hint }) => (
+const FormField: React.FC<{ label: string, children: React.ReactNode, required?: boolean, hint?: string }> = ({ label, children, required, hint }) => (
     <div>
         <label className="block text-sm font-medium text-dark-text-secondary mb-1.5">
             {label} {required && <span className="text-red-400">*</span>}
@@ -50,21 +41,12 @@ const CheckboxGroup: React.FC<{ options: string[], selectedValues: string[], onC
             </label>
         ))}
     </div>
-);interface CompetitorAnalysisFormProps {
-  formState: any;
-  setFormState: any;
-  isBusy: boolean;
-}
+);
 
+// --- Form Components ---
 
-const CompetitorAnalysisForm: React.FC<CompetitorAnalysisFormProps> = ({ formState, setFormState, isBusy }) => {
+const CompetitorAnalysisForm: React.FC<{ formState: any, setFormState: any, isBusy: boolean }> = ({ formState, setFormState, isBusy }) => {
     const handleChange = (field: string, value: any) => setFormState((prev: any) => ({ ...prev, [field]: value }));
-    const handleAdditionalCompetitorChange = (index: number, value: string) => {
-        const newCompetitors = [...formState.additionalCompetitors];
-        newCompetitors[index] = value;
-        handleChange('additionalCompetitors', newCompetitors);
-    };
-    const addCompetitorField = () => handleChange('additionalCompetitors', [...formState.additionalCompetitors, '']);
 
     return (
         <div className="space-y-4">
@@ -76,12 +58,6 @@ const CompetitorAnalysisForm: React.FC<CompetitorAnalysisFormProps> = ({ formSta
                     <input type="url" value={formState.competitorUrl} onChange={e => handleChange('competitorUrl', e.target.value)} required className="w-full bg-dark-bg border border-dark-border rounded-lg p-2.5" disabled={isBusy} />
                 </FormField>
             </div>
-             <FormField label="Additional Competitors" hint="Add up to 3 more competitors for a broader analysis.">
-                {formState.additionalCompetitors.map((c: string, i: number) => (
-                    <input key={i} type="url" value={c} onChange={e => handleAdditionalCompetitorChange(i, e.target.value)} className="w-full bg-dark-bg border border-dark-border rounded-lg p-2.5 mt-1" disabled={isBusy} />
-                ))}
-                {formState.additionalCompetitors.length < 3 && <button type="button" onClick={addCompetitorField} className="text-xs text-brand-accent mt-1">+ Add More</button>}
-            </FormField>
              <div className="grid md:grid-cols-2 gap-4">
                 <FormField label="Industry/Niche" required hint="Helps contextualize competitive landscape.">
                     <select value={formState.industry} onChange={e => handleChange('industry', e.target.value)} required className="w-full bg-dark-bg border border-dark-border rounded-lg p-2.5" disabled={isBusy}>
@@ -99,14 +75,9 @@ const CompetitorAnalysisForm: React.FC<CompetitorAnalysisFormProps> = ({ formSta
             </FormField>
         </div>
     );
-};interface WebsiteAuditFormProps {
-  formState: any;
-  setFormState: any;
-  isBusy: boolean;
-}
+};
 
-
-const WebsiteAuditForm: React.FC<WebsiteAuditFormProps> = ({ formState, setFormState, isBusy }) => {
+const WebsiteAuditForm: React.FC<{ formState: any, setFormState: any, isBusy: boolean }> = ({ formState, setFormState, isBusy }) => {
     const handleChange = (field: string, value: any) => setFormState((prev: any) => ({ ...prev, [field]: value }));
     const handleGoalChange = (goal: string) => {
         const newGoals = formState.primaryGoals.includes(goal) ? formState.primaryGoals.filter((g: string) => g !== goal) : [...formState.primaryGoals, goal];
@@ -126,14 +97,9 @@ const WebsiteAuditForm: React.FC<WebsiteAuditFormProps> = ({ formState, setFormS
             </FormField>
         </div>
     );
-};interface KeywordResearchFormProps {
-  formState: any;
-  setFormState: any;
-  isBusy: boolean;
-}
+};
 
-
-const KeywordResearchForm: React.FC<KeywordResearchFormProps> = ({ formState, setFormState, isBusy }) => {
+const KeywordResearchForm: React.FC<{ formState: any, setFormState: any, isBusy: boolean }> = ({ formState, setFormState, isBusy }) => {
     const handleChange = (field: string, value: any) => setFormState((prev: any) => ({ ...prev, [field]: value }));
 
     return (
@@ -151,78 +117,226 @@ const KeywordResearchForm: React.FC<KeywordResearchFormProps> = ({ formState, se
             </FormField>
         </div>
     );
-};interface ProcessingStateProps {
-  message: string;
-}
+};
 
+const EngagingProcessingView: React.FC = () => {
+    const stages = [
+        { duration: 30000, message: "Gathering your market data...", detail: "Initializing AI research agents..." },
+        { duration: 90000, message: "Scanning competitors...", detail: "Analyzing top 10 SERP results and their strategies." },
+        { duration: 180000, message: "Analyzing keywords...", detail: "💡 Did you know? 72% of B2B buyers research vendors online first." },
+        { duration: 300000, message: "Finding opportunities...", detail: "📈 AI is crunching 2.4M data points for you..." },
+        { duration: 600000, message: "Finalizing deep dive insights...", detail: "✅ Finished trend analysis. Starting competitor gap scan..." },
+    ];
 
-const ProcessingState: React.FC<ProcessingStateProps> = ({ message }) => {
-    const stages = ["SERP Data Collection", "Competitor Page Crawling", "AI Intelligence Analysis", "Report Generation"];
-    let currentStageIndex = -1;
-    if (message.includes("SERP") || message.includes("Submitting")) currentStageIndex = 0;
-    if (message.includes("Crawling")) currentStageIndex = 1;
-    if (message.includes("Analyzing")) currentStageIndex = 2;
-    if (message.includes("complete")) currentStageIndex = 3;
+    const [currentStageIndex, setCurrentStageIndex] = useState(0);
+    const [progress, setProgress] = useState(0);
+
+    useEffect(() => {
+        let stageTimer: number;
+        let progressTimer: number;
+
+        const advanceStage = (stageIndex: number) => {
+            if (stageIndex >= stages.length) return;
+            setCurrentStageIndex(stageIndex);
+            stageTimer = window.setTimeout(() => advanceStage(stageIndex + 1), stages[stageIndex].duration);
+        };
+        
+        advanceStage(0);
+
+        progressTimer = window.setInterval(() => {
+            setProgress(p => {
+                if (p >= 100) {
+                    clearInterval(progressTimer);
+                    return 100;
+                }
+                return p + 0.16; // Approx 10 minutes to 100%
+            });
+        }, 1000);
+
+        return () => {
+            clearTimeout(stageTimer);
+            clearInterval(progressTimer);
+        };
+    }, []);
+
+    const currentStage = stages[Math.min(currentStageIndex, stages.length - 1)];
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="bg-dark-card border-2 border-brand-primary/50 rounded-xl p-6 shadow-lg text-center"
+            className="bg-dark-card border-2 border-dark-border rounded-xl p-6 shadow-lg text-center my-4 relative overflow-hidden"
         >
-            <h3 className="text-xl font-bold text-white mb-2">🤖 AI Analysis in Progress</h3>
-            <div className="w-full bg-dark-bg rounded-full h-2.5 my-4">
-                <div className="bg-brand-primary h-2.5 rounded-full transition-all duration-500" style={{ width: `${(currentStageIndex + 1) / stages.length * 100}%` }}></div>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-dark-text-secondary">
-                {stages.map((stage, i) => (
-                    <div key={stage} className={`flex items-center gap-1.5 ${currentStageIndex >= i ? 'text-white' : ''}`}>
-                        <span className={`transition-colors ${currentStageIndex > i ? 'text-green-400' : ''}`}>
-                            {currentStageIndex > i ? '✅' : '⏳'}
-                        </span>
-                        <span>{stage}</span>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-sweep animate-gradient-sweep opacity-10"></div>
+            <div className="relative z-10">
+                <div className="relative inline-block h-16 w-16">
+                     <div className="absolute h-full w-full bg-brand-primary/20 rounded-full animate-pulse-ring"></div>
+                     <div className="relative h-16 w-16 bg-dark-bg rounded-full flex items-center justify-center text-white text-3xl animate-dna-spin" style={{animationDuration: '5s'}}>
+                        {ICONS.dna}
                     </div>
-                ))}
+                </div>
+                <AnimatePresence mode="wait">
+                    <motion.h3 
+                        key={currentStage.message}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.5 }}
+                        className="text-xl font-bold text-white mt-4"
+                    >
+                       {currentStage.message}
+                    </motion.h3>
+                </AnimatePresence>
+                 <AnimatePresence mode="wait">
+                    <motion.p
+                        key={currentStage.detail}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3, duration: 0.5 }}
+                        className="text-sm text-dark-text-secondary mt-2 h-4"
+                    >
+                        {currentStage.detail}
+                    </motion.p>
+                </AnimatePresence>
+                <div className="w-full bg-dark-bg rounded-full h-2.5 my-4 border border-dark-border">
+                    <div className="bg-brand-primary h-full rounded-full" style={{ width: `${progress}%`, transition: 'width 1s linear' }}></div>
+                </div>
+                <p className="text-xs text-dark-text-secondary">
+                    This deep dive can take several minutes. Feel free to keep this tab open. If you close it, we'll email you the report when it's ready.
+                </p>
             </div>
-             <p className="text-sm text-dark-text-secondary mt-4">{message}</p>
         </motion.div>
     );
 };
 
+const ReportResult: React.FC<{ report: ResearchReport; onReset: () => void }> = ({ report, onReset }) => {
+    const { bodyContent, styleContent } = useMemo(() => {
+        const html = report.html_output || '<body>Report failed to render.</body>';
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const bodyContent = doc.body.innerHTML;
+            const styleContent = Array.from(doc.querySelectorAll('style')).map(s => s.innerHTML).join('\n');
+            return { bodyContent, styleContent };
+        } catch (e) {
+            console.error("Failed to parse report HTML:", e);
+            return { bodyContent: '<p>Error: Could not display report content.</p>', styleContent: '' };
+        }
+    }, [report.html_output]);
 
+    useEffect(() => {
+        if (!styleContent) return;
+        const styleTag = document.createElement('style');
+        styleTag.id = 'dynamic-report-styles';
+        styleTag.innerHTML = styleContent;
+        document.head.appendChild(styleTag);
+        return () => {
+            const existingTag = document.getElementById('dynamic-report-styles');
+            if (existingTag) {
+                document.head.removeChild(existingTag);
+            }
+        };
+    }, [styleContent]);
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <h2 className="text-2xl font-bold text-white text-center">Your AI Research Report is Ready!</h2>
+            <div className="bg-white p-6 rounded-lg text-black overflow-auto max-h-[70vh] border border-dark-border">
+                <div dangerouslySetInnerHTML={{ __html: bodyContent }} />
+            </div>
+            <div className="text-center">
+                <button onClick={onReset} className="bg-brand-primary hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg">
+                    + Run New Analysis
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
+// --- Main Page Component ---
 const ResearchAgentPage: React.FC = () => {
     const user = { email: 'demo@zulari.app' };
     const [mode, setMode] = useState<ResearchMode>('competitor_analysis');
     
-    // Form states
-    const [competitorForm, setCompetitorForm] = useState({ keyword: '', competitorUrl: '', additionalCompetitors: [''], industry: 'SaaS', region: 'United States', analysisDepth: 'quick' });
+    const [competitorForm, setCompetitorForm] = useState({ keyword: '', competitorUrl: '', industry: 'SaaS', region: 'United States', analysisDepth: 'quick' });
     const [auditForm, setAuditForm] = useState({ siteUrl: '', primaryGoals: [], reportTone: 'Executive Summary' });
     const [keywordForm, setKeywordForm] = useState({ seedKeywords: '', industry: 'Digital Marketing', difficulty: 'easy' });
 
-    const [jobState, setJobState] = useState<{ status: JobStatus, runId: string | null, message: string }>({ status: 'idle', runId: null, message: '' });
+    const [status, setStatus] = useState<PageStatus>('idle');
+    const [latestReport, setLatestReport] = useState<ResearchReport | null>(null);
+    const [errorMessage, setErrorMessage] = useState('');
+    
     const [reports, setReports] = useState<ResearchReport[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
     const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const [showConfetti, setShowConfetti] = useState(false);
     const [selectedReport, setSelectedReport] = useState<ResearchReport | null>(null);
-    
-    const pollerRef = useRef<{ stop: () => void } | null>(null);
 
+    // NEW state for filtering and pagination
+    const [agentFilter, setAgentFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState('all');
+    const REPORTS_PER_PAGE = 6;
+    const [visibleReportsCount, setVisibleReportsCount] = useState(REPORTS_PER_PAGE);
+    
     const fetchReports = useCallback(async () => {
-        setIsLoading(true);
+        setIsLoadingHistory(true);
         try {
             const data = await researchService.fetchReportsForUser(user.email, 1, 100);
             setReports(data.reports || []);
         } catch (err: any) {
             setNotification({ message: `Failed to load reports: ${err.message}`, type: 'error' });
         } finally {
-            setIsLoading(false);
+            setIsLoadingHistory(false);
         }
     }, [user.email]);
 
     useEffect(() => { fetchReports(); }, [fetchReports]);
 
+    // Reset visible count when filters change
+    useEffect(() => {
+        setVisibleReportsCount(REPORTS_PER_PAGE);
+    }, [agentFilter, dateFilter]);
+
+    const filteredReports = useMemo(() => {
+        let dateBoundary: Date | null = null;
+        if (dateFilter !== 'all') {
+            dateBoundary = new Date();
+            const daysToSubtract = dateFilter === 'last_7_days' ? 7 : 30;
+            dateBoundary.setDate(dateBoundary.getDate() - daysToSubtract);
+            dateBoundary.setHours(0, 0, 0, 0); // Start of the day
+        }
+
+        return reports
+            .filter(report => {
+                // Agent filter
+                if (agentFilter !== 'all' && report.agent_id !== agentFilter) {
+                    return false;
+                }
+                // Date filter
+                if (dateBoundary) {
+                    const reportDate = new Date(report.timestamp);
+                    if (reportDate < dateBoundary) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [reports, agentFilter, dateFilter]);
+
+    const displayedReports = useMemo(() => {
+        return filteredReports.slice(0, visibleReportsCount);
+    }, [filteredReports, visibleReportsCount]);
+    
+    const handleShowMore = () => {
+        setVisibleReportsCount(prev => prev + REPORTS_PER_PAGE);
+    };
+
+    const hasMore = visibleReportsCount < filteredReports.length;
+
     const handleStart = async (e: React.FormEvent) => {
         e.preventDefault();
-        setNotification(null);
+        setStatus('processing');
+        setLatestReport(null);
+        setErrorMessage('');
 
         let inputPayload = {};
         if (mode === 'competitor_analysis') {
@@ -241,43 +355,40 @@ const ResearchAgentPage: React.FC = () => {
             input: inputPayload,
         };
 
-        setJobState({ status: 'processing', runId: null, message: 'Submitting request...' });
         try {
-            // Mocking the API call
-            await new Promise(res => setTimeout(res, 1000));
-            const response = { status: 'queued', runId: `run_${Date.now()}`, estimatedSeconds: 30 };
+            const response = await researchService.startResearch(payload);
+            if (!response || !Array.isArray(response) || response.length === 0 || !response[0].html_output) {
+                throw new Error("Invalid response format from the server. The report might be empty.");
+            }
             
-            setJobState({ status: 'queued', runId: response.runId, message: `Job queued! (Est: ${response.estimatedSeconds}s)` });
-            
-            // Mock poller
-            const stages = ['Fetching SERP results', 'Crawling competitor pages', 'Analyzing content with AI', 'Report Generation'];
-            let stageIndex = 0;
-            const poller = setInterval(() => {
-                if (stageIndex < stages.length) {
-                    setJobState(prev => ({ ...prev, status: 'processing', message: stages[stageIndex] }));
-                    stageIndex++;
-                } else {
-                    clearInterval(poller);
-                    setJobState({ status: 'completed', runId: null, message: 'Analysis complete!' });
-                    setNotification({ message: 'Report ready — saved to Reports.', type: 'success' });
-                    setShowConfetti(true);
-                    setTimeout(() => setShowConfetti(false), 3000);
-                    fetchReports();
-                }
-            }, 5000);
-            
+            setStatus('completed');
+            setLatestReport(response[0]);
+            setNotification({ message: 'Report generated successfully!', type: 'success' });
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 3000);
+            fetchReports();
+
         } catch (err: any) {
-            setJobState({ status: 'failed', runId: null, message: err.message || 'Failed to start research.' });
+            const msg = err.message || 'Failed to start research.';
+            setStatus('failed');
+            setErrorMessage(msg);
+            setNotification({ message: msg, type: 'error' });
         }
     };
     
+    const handleReset = () => {
+        setStatus('idle');
+        setLatestReport(null);
+        setErrorMessage('');
+    };
+
     const cards: { id: ResearchMode; name: string; desc: string; icon: React.ReactNode; }[] = [
         { id: 'competitor_analysis', name: 'Competitor Analysis', desc: 'See what competitors rank for', icon: ICONS.research },
         { id: 'website_audit', name: 'Website Self-Audit', desc: 'Check your site’s SEO health', icon: ICONS.web },
         { id: 'keyword_research', name: 'Keyword & Market Research', desc: 'Discover keyword opportunities', icon: ICONS.stats }
     ];
 
-    const isBusy = jobState.status === 'queued' || jobState.status === 'processing';
+    const isBusy = status === 'processing';
     
     const renderForm = () => {
         switch (mode) {
@@ -290,20 +401,13 @@ const ResearchAgentPage: React.FC = () => {
     
     const renderReportContent = () => {
         if (!selectedReport) return null;
-        
-        if (selectedReport.html_output) {
-            const sanitizedHtmlForSrcDoc = selectedReport.html_output.replace(/"/g, '&quot;');
-            return <iframe srcDoc={sanitizedHtmlForSrcDoc} className="w-full h-full border-0 rounded-lg bg-white" sandbox="allow-scripts allow-same-origin" title="Research Report" />;
+        const html = selectedReport.html_output || selectedReport.html_output_url;
+        if (html) {
+            // Using srcDoc for sandboxing and simplicity
+            return <iframe srcDoc={html} className="w-full h-full border-0 rounded-lg bg-white" sandbox="allow-scripts allow-same-origin" title="Research Report" />;
         }
-        
-        if (selectedReport.html_output_url) {
-            return <iframe src={selectedReport.html_output_url} className="w-full h-full border-0 rounded-lg bg-white" sandbox="allow-scripts allow-same-origin" title="Research Report" />;
-        }
-        
-        // Fallback to JSON view if no HTML is available
         return <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(selectedReport, null, 2)}</pre>;
     };
-
 
     return (
         <div className="space-y-6">
@@ -328,42 +432,92 @@ const ResearchAgentPage: React.FC = () => {
                     ))}
                 </div>
 
-                <form onSubmit={handleStart} className="bg-dark-card p-6 rounded-xl border border-dark-border space-y-4">
-                    <AnimatePresence mode="wait">
-                        <motion.div key={mode} initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} transition={{duration: 0.2}}>
-                            {renderForm()}
+                <AnimatePresence mode="wait">
+                    {status === 'completed' && latestReport ? (
+                        <motion.div key="result" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+                             <ReportResult report={latestReport} onReset={handleReset} />
                         </motion.div>
-                    </AnimatePresence>
-                     <div className="border-t border-dark-border pt-4 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p className="text-xs text-dark-text-secondary">Join 5,000+ businesses using our intelligence.</p>
-                        <button type="submit" disabled={isBusy} className="w-full md:w-auto flex justify-center items-center bg-brand-primary hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg disabled:bg-slate-600">
-                             {isBusy ? 'Processing...' : '🚀 Start Analysis'}
-                        </button>
-                    </div>
-                </form>
-
-                <AnimatePresence>
-                    {isBusy && <ProcessingState message={jobState.message} />}
+                    ) : (
+                        <motion.div key="form" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+                             <form onSubmit={handleStart} className="bg-dark-card p-6 rounded-xl border border-dark-border space-y-4">
+                                <AnimatePresence mode="wait">
+                                    <motion.div key={mode} initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} transition={{duration: 0.2}}>
+                                        {renderForm()}
+                                    </motion.div>
+                                </AnimatePresence>
+                                <div className="border-t border-dark-border pt-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                                    <p className="text-xs text-dark-text-secondary">Join 5,000+ businesses using our intelligence.</p>
+                                    <button type="submit" disabled={isBusy} className="w-full md:w-auto flex justify-center items-center bg-brand-primary hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg disabled:bg-slate-600">
+                                        {isBusy ? 'Processing...' : '🚀 Start Analysis'}
+                                    </button>
+                                </div>
+                            </form>
+                            {status === 'processing' && <EngagingProcessingView />}
+                            {status === 'failed' && (
+                                <div className="mt-4 p-4 bg-red-900/50 text-red-300 rounded-lg border border-red-700 text-center">
+                                    <p className="font-semibold">Research Failed</p>
+                                    <p className="text-sm mt-1">{errorMessage}</p>
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
                 </AnimatePresence>
 
                  <div className="bg-dark-card p-6 rounded-xl border border-dark-border">
-                    <h2 className="text-xl font-bold text-white">Your Intelligence Dashboard</h2>
-                    {isLoading ? <p className="text-center py-8 text-dark-text-secondary">Loading reports...</p> : reports.length === 0 ? (
-                        <p className="text-center py-8 text-dark-text-secondary">Your generated reports will appear here.</p>
-                    ) : (
-                        <div className="mt-4 grid md:grid-cols-2 gap-4">
-                            {reports.map(report => (
-                                <div key={report.requestId} className="bg-dark-bg p-4 rounded-lg border border-dark-border">
-                                    <h4 className="font-semibold text-white truncate">{report.potential_focus_keyword}</h4>
-                                    <p className="text-xs text-dark-text-secondary capitalize">{report.agent_id.replace('_', ' ')} - {new Date(report.timestamp).toLocaleDateString()}</p>
-                                    <p className="text-sm text-dark-text-secondary mt-2 line-clamp-2">{report.short_summary}</p>
-                                    <div className="mt-3 flex gap-2">
-                                        <button onClick={() => setSelectedReport(report)} className="text-xs bg-dark-border hover:bg-brand-primary px-3 py-1 rounded">View</button>
-                                        <button className="text-xs bg-dark-border hover:bg-brand-primary px-3 py-1 rounded">Download</button>
-                                    </div>
-                                </div>
-                            ))}
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <h2 className="text-xl font-bold text-white">Your Intelligence Dashboard</h2>
+                        
+                        <div className="flex items-center gap-2 sm:gap-4 w-full md:w-auto">
+                            <select
+                                value={agentFilter}
+                                onChange={e => setAgentFilter(e.target.value)}
+                                className="bg-dark-bg border border-dark-border rounded-lg p-2 text-sm w-full sm:w-auto"
+                                aria-label="Filter by agent"
+                            >
+                                <option value="all">All Agents</option>
+                                <option value="competitor_analysis">Competitor Analysis</option>
+                                <option value="website_audit">Website Audit</option>
+                                <option value="keyword_research">Keyword Research</option>
+                            </select>
+                            <select
+                                value={dateFilter}
+                                onChange={e => setDateFilter(e.target.value)}
+                                className="bg-dark-bg border border-dark-border rounded-lg p-2 text-sm w-full sm:w-auto"
+                                aria-label="Filter by date"
+                            >
+                                <option value="all">All Time</option>
+                                <option value="last_7_days">Last 7 Days</option>
+                                <option value="last_30_days">Last 30 Days</option>
+                            </select>
                         </div>
+                    </div>
+                    {isLoadingHistory ? <p className="text-center py-8 text-dark-text-secondary">Loading reports...</p> : displayedReports.length === 0 ? (
+                        <p className="text-center py-8 text-dark-text-secondary">
+                            {reports.length > 0 ? 'No reports match your filters.' : 'Your generated reports will appear here.'}
+                        </p>
+                    ) : (
+                        <>
+                            <div className="mt-4 grid md:grid-cols-2 gap-4">
+                                {displayedReports.map(report => (
+                                    <div key={report.requestId || report.timestamp} className="bg-dark-bg p-4 rounded-lg border border-dark-border">
+                                        <h4 className="font-semibold text-white truncate">{report.potential_focus_keyword}</h4>
+                                        <p className="text-xs text-dark-text-secondary capitalize">{report.agent_id.replace(/_/g, ' ')} - {new Date(report.timestamp).toLocaleDateString()}</p>
+                                        <p className="text-sm text-dark-text-secondary mt-2 line-clamp-2">{report.short_summary}</p>
+                                        <div className="mt-3 flex gap-2">
+                                            <button onClick={() => setSelectedReport(report)} className="text-xs bg-dark-border hover:bg-brand-primary px-3 py-1 rounded">View</button>
+                                            <button className="text-xs bg-dark-border hover:bg-brand-primary px-3 py-1 rounded">Download</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {hasMore && (
+                                <div className="text-center mt-6">
+                                    <button onClick={handleShowMore} className="bg-dark-border hover:bg-brand-primary text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+                                        Show More Reports
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

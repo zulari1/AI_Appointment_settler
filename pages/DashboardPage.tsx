@@ -25,15 +25,9 @@ const parsePercent = (s: any): number => {
   const n = parseFloat(clean);
   if (n > 0 && n <= 1) return n * 100;
   return n || 0;
-};interface AnimatedCounterProps {
-  value: number;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
-}
+};
 
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = '', suffix = '', decimals = 0 }) => {
+const AnimatedCounter: React.FC<{ value: number, prefix?: string, suffix?: string, decimals?: number }> = ({ value, prefix = '', suffix = '', decimals = 0 }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
 
     useEffect(() => {
@@ -46,13 +40,9 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = '', s
     }, [value]);
 
     return <span>{prefix}{animatedValue.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</span>;
-};interface SparkLineProps {
-  data: number[];
-  colorClass: string;
-}
+};
 
-
-const SparkLine: React.FC<SparkLineProps> = ({ data, colorClass }) => {
+const SparkLine: React.FC<{ data: number[], colorClass: string }> = ({ data, colorClass }) => {
   if (data.length < 2) return <div className="h-8 w-full bg-dark-bg/50 rounded" />;
   const width = 120;
   const height = 32;
@@ -66,15 +56,9 @@ const SparkLine: React.FC<SparkLineProps> = ({ data, colorClass }) => {
       <polyline fill="none" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" points={points} />
     </svg>
   );
-};interface ProgressRingProps {
-  percentage: number;
-  colorClass: string;
-  size?: number;
-  strokeWidth?: number;
-}
+};
 
-
-const ProgressRing: React.FC<ProgressRingProps> = ({ percentage, colorClass, size = 80, strokeWidth = 8 }) => {
+const ProgressRing: React.FC<{ percentage: number, colorClass: string, size?: number, strokeWidth?: number }> = ({ percentage, colorClass, size = 80, strokeWidth = 8 }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
@@ -103,19 +87,9 @@ const ProgressRing: React.FC<ProgressRingProps> = ({ percentage, colorClass, siz
             </div>
         </div>
     );
-};interface KpiCardProps {
-  title: string;
-  value: number;
-  subtitle: string;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
-  sparklineData: number[];
-  colorClass: string;
-}
+};
 
-
-const KpiCard: React.FC<KpiCardProps> = 
+const KpiCard: React.FC<{ title: string, value: number, subtitle: string, prefix?: string, suffix?: string, decimals?: number, sparklineData: number[], colorClass: string }> = 
 ({ title, value, subtitle, prefix, suffix, decimals, sparklineData, colorClass }) => (
     <div className="bg-dark-bg border border-dark-border rounded-xl p-5 space-y-2 flex flex-col justify-between">
         <div>
@@ -127,18 +101,9 @@ const KpiCard: React.FC<KpiCardProps> =
             <SparkLine data={sparklineData} colorClass={colorClass} />
         </div>
     </div>
-);interface ServiceCardProps {
-  icon: ReactNode;
-  title: string;
-  runs: number;
-  lastSummary: string;
-  revenueContribution: number;
-  totalRevenueUnlocked: number;
-  link: string;
-}
+);
 
-
-const ServiceCard: React.FC<ServiceCardProps> = 
+const ServiceCard: React.FC<{ icon: ReactNode, title: string, runs: number, lastSummary: string, revenueContribution: number, totalRevenueUnlocked: number, link: string }> = 
 ({ icon, title, runs, lastSummary, revenueContribution, totalRevenueUnlocked, link }) => {
     const navigate = useNavigate();
     const contributionPercent = totalRevenueUnlocked > 0 ? (revenueContribution / totalRevenueUnlocked) * 100 : 0;
@@ -158,12 +123,9 @@ const ServiceCard: React.FC<ServiceCardProps> =
             </div>
         </div>
     );
-};interface RecentActivityFeedProps {
-  events: RecentEvent[];
-}
+};
 
-
-const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({ events }) => (
+const RecentActivityFeed: React.FC<{ events: RecentEvent[] }> = ({ events }) => (
     <div className="bg-dark-card border border-dark-border rounded-xl p-5 h-full">
         <h3 className="font-bold text-white mb-3">Recent Activity</h3>
         <div className="space-y-3">
@@ -178,14 +140,9 @@ const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({ events }) => (
             ))}
         </div>
     </div>
-);interface GrowthAchievementsProps {
-  score: number;
-  achievements: string[];
-  streak: number;
-}
+);
 
-
-const GrowthAchievements: React.FC<GrowthAchievementsProps> = ({ score, achievements, streak }) => (
+const GrowthAchievements: React.FC<{ score: number, achievements: string[], streak: number }> = ({ score, achievements, streak }) => (
     <div className="bg-dark-card border border-dark-border rounded-xl p-5 h-full flex flex-col justify-between">
         <div className="flex items-center justify-between">
             <div>
@@ -203,12 +160,9 @@ const GrowthAchievements: React.FC<GrowthAchievementsProps> = ({ score, achievem
             </div>
         </div>
     </div>
-);interface RoiBreakdownChartProps {
-  data: { name: string, value: number, color: string }[];
-}
+);
 
-
-const RoiBreakdownChart: React.FC<RoiBreakdownChartProps> = ({ data }) => {
+const RoiBreakdownChart: React.FC<{ data: { name: string, value: number, color: string }[] }> = ({ data }) => {
     const maxValue = useMemo(() => Math.max(...data.map(d => d.value), 1), [data]);
     return (
         <div className="bg-dark-card border border-dark-border rounded-xl p-5">

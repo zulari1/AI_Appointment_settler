@@ -5,12 +5,9 @@ import { ICONS } from '../constants';
 interface SidebarProps {
     sidebarOpen: boolean;
     setSidebarOpen: (open: boolean) => void;
-}interface NavGroupProps {
-  title: string; children: React.ReactNode;
 }
 
-
-const NavGroup: React.FC<NavGroupProps> = ({ title, children }) => {
+const NavGroup: React.FC<{ title: string; children: React.ReactNode; }> = ({ title, children }) => {
     const [isOpen, setIsOpen] = useState(true);
     return (
         <div>

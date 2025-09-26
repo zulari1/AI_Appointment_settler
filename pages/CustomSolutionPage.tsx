@@ -6,12 +6,8 @@ import * as n8n from '../services/n8nService';
 import { CustomSolutionFormData, CustomSolutionMetric, CustomSolutionStakeholder, CustomSolutionPayload } from '../types';
 import ActionNotification from '../components/ActionNotification';
 
-// --- Reusable UI Components ---interface ProgressBarProps {
-  step: number; totalSteps: number;
-}
-
-
-const ProgressBar: React.FC<ProgressBarProps> = ({ step, totalSteps }) => {
+// --- Reusable UI Components ---
+const ProgressBar: React.FC<{ step: number; totalSteps: number }> = ({ step, totalSteps }) => {
     const progress = Math.max(10, (step / totalSteps) * 100);
     return (
         <div className="w-full bg-dark-bg rounded-full h-2.5 my-4 border border-dark-border">
@@ -23,12 +19,9 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ step, totalSteps }) => {
             />
         </div>
     );
-};interface WizardStepProps {
-  step: number; title: string; children: ReactNode;
-}
+};
 
-
-const WizardStep: React.FC<WizardStepProps> = ({ step, title, children }) => (
+const WizardStep: React.FC<{ step: number; title: string; children: ReactNode; }> = ({ step, title, children }) => (
     <motion.div
         key={step}
         initial={{ opacity: 0, x: 50 }}
@@ -40,12 +33,9 @@ const WizardStep: React.FC<WizardStepProps> = ({ step, title, children }) => (
         <h2 className="text-3xl font-bold text-white text-center">{title}</h2>
         {children}
     </motion.div>
-);interface AIHelperProps {
-  step: number;
-}
+);
 
-
-const AIHelper: React.FC<AIHelperProps> = ({ step }) => {
+const AIHelper: React.FC<{ step: number }> = ({ step }) => {
     let title = "Let's Get Started!";
     let insights: { title: string, text: string }[] = [{ title: "Why this info?", text: "Providing your name, email, and company helps us tailor the final solution and send it to you securely." }];
     let tips: { title: string, text: string }[] = [{ title: "Quick Tip", text: "Use your work email to ensure you receive the results." }];
@@ -107,13 +97,8 @@ const AIHelper: React.FC<AIHelperProps> = ({ step }) => {
     );
 };
 
-// --- Wizard Step Components ---interface OnboardingStepProps {
-  data: any;
-  update: Function;
-}
-
-
-const OnboardingStep: React.FC<OnboardingStepProps> = ({ data, update }) => (
+// --- Wizard Step Components ---
+const OnboardingStep: React.FC<{ data: any, update: Function }> = ({ data, update }) => (
     <div className="max-w-md mx-auto space-y-4 text-center">
         <p className="text-dark-text-secondary">We'll ask 7 smart questions to design your perfect automation in 5 minutes.</p>
         <input type="text" value={data.firstName} onChange={e => update('firstName', e.target.value)} placeholder="What's your first name?" required className="w-full bg-dark-bg border border-dark-border rounded-lg p-3 text-center" />
@@ -121,13 +106,8 @@ const OnboardingStep: React.FC<OnboardingStepProps> = ({ data, update }) => (
         <input type="text" value={data.company} onChange={e => update('company', e.target.value)} placeholder="Company/Organization" required className="w-full bg-dark-bg border border-dark-border rounded-lg p-3 text-center" />
         <p className="text-xs text-dark-text-secondary">🔒 Your information is secure and private</p>
     </div>
-);interface ObjectiveStepProps {
-  data: any;
-  update: Function;
-}
-
-
-const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ data, update }) => {
+);
+const ObjectiveStep: React.FC<{ data: any, update: Function }> = ({ data, update }) => {
     const objectives = [ { icon: '💰', title: 'Revenue' }, { icon: '⚡', title: 'Efficiency' }, { icon: '😊', title: 'Experience' }, { icon: '📊', title: 'Insights' }, { icon: '📈', title: 'Scale' }, { icon: '🚀', title: 'Innovate' } ];
     return (
          <div className="max-w-2xl mx-auto space-y-6">
@@ -143,13 +123,9 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ data, update }) => {
              <textarea value={data.specificGoal} onChange={e => update('specificGoal', e.target.value)} placeholder="💬 Describe your specific goal..." rows={3} className="w-full bg-dark-bg border border-dark-border rounded-lg p-3" />
         </div>
     );
-};interface PainPointsStepProps {
-  data: any;
-  update: Function;
-}
+};
 
-
-const PainPointsStep: React.FC<PainPointsStepProps> = ({ data, update }) => {
+const PainPointsStep: React.FC<{ data: any, update: Function }> = ({ data, update }) => {
     const challenges = ['⏰ Time Constraints', '👥 Resource Limits', '🧩 Process Complexity', '📊 Data Overwhelm', '🔄 Poor Coordination', '😤 Customer Issues'];
     const urgencies: { value: CustomSolutionFormData['urgency'], label: string}[] = [{value: 'critical', label: 'Critical - ASAP'}, {value: 'important', label: 'Important - Within 3 months'}, {value: 'moderate', label: 'Moderate - When convenient'}];
     return (
@@ -180,13 +156,9 @@ const KNOWN_TOOLS: { [key: string]: { name: string; status: 'integrable' | 'comp
   hubspot: { name: 'HubSpot', status: 'complex', logo: '🧡', category: 'CRM'},
   sheets: { name: 'Google Sheets', status: 'integrable', logo: '📄', category: 'Analytics'},
 };
-const TOOL_CATEGORIES = ['CRM', 'Communication', 'Project Mgmt', 'Email', 'Finance', 'Design', 'Analytics', 'Cloud Storage'];interface TechStackStepProps {
-  data: any;
-  update: Function;
-}
+const TOOL_CATEGORIES = ['CRM', 'Communication', 'Project Mgmt', 'Email', 'Finance', 'Design', 'Analytics', 'Cloud Storage'];
 
-
-const TechStackStep: React.FC<TechStackStepProps> = ({ data, update }) => {
+const TechStackStep: React.FC<{ data: any, update: Function }> = ({ data, update }) => {
     const [techSearch, setTechSearch] = useState('');
     const addTool = (toolName: string) => {
         const normalized = toolName.toLowerCase();
@@ -218,13 +190,9 @@ const TechStackStep: React.FC<TechStackStepProps> = ({ data, update }) => {
             <textarea value={data.customTools} onChange={e => update('customTools', e.target.value)} placeholder="🤔 Any tools missing? Describe them here..." rows={2} className="w-full bg-dark-bg border border-dark-border rounded-lg p-3" />
         </div>
     );
-};interface ResourcesStepProps {
-  data: any;
-  update: Function;
-}
+};
 
-
-const ResourcesStep: React.FC<ResourcesStepProps> = ({ data, update }) => {
+const ResourcesStep: React.FC<{ data: any, update: Function }> = ({ data, update }) => {
     const annualSavings = Math.round((data.painIntensity / 10) * 52000 + data.budget * 2);
     const paybackMonths = data.budget > 0 ? (data.budget / (annualSavings / 12)).toFixed(1) : '0';
     const fiveYearValue = (annualSavings * 5 - data.budget).toLocaleString();
@@ -249,13 +217,9 @@ const ResourcesStep: React.FC<ResourcesStepProps> = ({ data, update }) => {
             <p className="text-sm text-dark-text-secondary">Payback in {paybackMonths} months • 5-Year Value: ${fiveYearValue}</p>
         </div>
     </div>
-)};interface SuccessMetricsStepProps {
-  data: any;
-  update: Function;
-}
+)};
 
-
-const SuccessMetricsStep: React.FC<SuccessMetricsStepProps> = ({ data, update }) => {
+const SuccessMetricsStep: React.FC<{ data: any, update: Function }> = ({ data, update }) => {
     const addMetric = () => update('metrics', [...data.metrics, { name: 'Revenue Impact', current: '', target: ''}]);
     return (
      <div className="max-w-2xl mx-auto space-y-4">
@@ -289,13 +253,9 @@ const InfluencePicker: React.FC<{ value: number; onChange: (value: number) => vo
             ))}
         </div>
     );
-};interface StakeholdersStepProps {
-  data: any;
-  update: Function;
-}
+};
 
-
-const StakeholdersStep: React.FC<StakeholdersStepProps> = ({ data, update }) => {
+const StakeholdersStep: React.FC<{ data: any, update: Function }> = ({ data, update }) => {
     const addStakeholder = () => update('stakeholders', [...data.stakeholders, { name: '', influence: 3, concern: '' }]);
     const updateStakeholder = (index: number, field: keyof CustomSolutionStakeholder, value: any) => {
         const newStakeholders = [...data.stakeholders];
@@ -376,16 +336,9 @@ const StakeholdersStep: React.FC<StakeholdersStepProps> = ({ data, update }) => 
             </div>
         </div>
     );
-};interface AnimatedInsightProps {
-  value: number;
-  label: string;
-  prefix?: string;
-  suffix?: string;
-  duration?: number;
-}
+};
 
-
-const AnimatedInsight: React.FC<AnimatedInsightProps> = ({ value, label, prefix = '', suffix = '', duration = 1.5 }) => {
+const AnimatedInsight: React.FC<{ value: number, label: string, prefix?: string, suffix?: string, duration?: number }> = ({ value, label, prefix = '', suffix = '', duration = 1.5 }) => {
     const ref = useRef<HTMLSpanElement>(null);
     useEffect(() => {
         const node = ref.current;

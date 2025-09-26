@@ -24,28 +24,40 @@ const GoogleConnectPrompt: React.FC<GoogleConnectPromptProps> = ({ service }) =>
     const details = serviceDetails[service];
 
     const handleConnect = () => {
-        // Store the initiating service to provide context on the callback page
-        sessionStorage.setItem('oauth_service_initiator', service);
-        
-        // As per the PRD, we request all scopes at once for a unified permission grant
+        const userEmail = 'demo@zulari.app'; // Hardcoded
+        const serviceName = 'Integrations';
+        const integrationType = 'Gmail';
+
+        const state = {
+            service: serviceName,
+            integrationType,
+            userEmail,
+            timestamp: Date.now(),
+            nonce: Math.random().toString(36).substring(7)
+        };
+        const stateEncoded = btoa(JSON.stringify(state));
+
         const scopes = [
             "https://www.googleapis.com/auth/gmail.readonly",
             "https://www.googleapis.com/auth/gmail.send",
             "https://www.googleapis.com/auth/calendar"
         ].join(" ");
         
-        // The redirect URI must point to the physical .html file that handles the hash routing
         const redirectUri = `${window.location.origin}/oauth.html`;
 
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-            `client_id=${VITE_GMAIL_CLIENT_ID}` +
-            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-            `&response_type=code` +
-            `&scope=${encodeURIComponent(scopes)}` +
-            `&access_type=offline` +
-            `&prompt=consent`;
-            
-        window.location.href = authUrl;
+        const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+        authUrl.searchParams.set('client_id', VITE_GMAIL_CLIENT_ID);
+        authUrl.searchParams.set('redirect_uri', redirectUri);
+        authUrl.searchParams.set('response_type', 'code');
+        authUrl.searchParams.set('scope', scopes);
+        authUrl.searchParams.set('access_type', 'offline');
+        authUrl.searchParams.set('prompt', 'consent');
+        authUrl.searchParams.set('state', stateEncoded);
+
+        console.log('Initiating OAuth from Integrations page with URL:', authUrl.toString());
+        console.log('State being sent:', state);
+        
+        window.location.href = authUrl.toString();
     };
 
     return (

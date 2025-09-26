@@ -1,5 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+
+
+import React, { useState, useEffect, ReactNode } from 'react';
 import { HashRouter, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -47,12 +49,11 @@ import ContactPage from './pages/resources/ContactPage';
 // Other Pages
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import AiAssistant from './components/AiAssistant';
-import { useAuth } from './hooks/useAuth';interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
+import { useAuth } from './hooks/useAuth';
+import { IntegrationsProvider } from './hooks/useIntegrations';
 
-
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+// FIX: Resolve ambiguous children prop error on ProtectedRoute by rewriting it as a standard functional component instead of using React.FC, which makes props more explicit and avoids potential issues with implicit children types.
+const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     const { loading, hasAccess } = useAuth();
     const navigate = useNavigate();
     const [ready, setReady] = useState(false);
@@ -154,10 +155,12 @@ const MainLayout: React.FC = () => {
 const App: React.FC = () => {
     return (
         <HashRouter>
-            <Routes>
-                <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-                <Route path="/*" element={<MainLayout />} />
-            </Routes>
+            <IntegrationsProvider>
+                <Routes>
+                    <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+                    <Route path="/*" element={<MainLayout />} />
+                </Routes>
+            </IntegrationsProvider>
         </HashRouter>
     );
 };

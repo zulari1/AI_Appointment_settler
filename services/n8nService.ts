@@ -1,9 +1,11 @@
 // FIX: Add missing support-related types
 // FIX: Add missing WebAIHistoryItem type
-import { ResearchReport, SalesInboxStats, SalesMeetingStats, SalesPipelineMetrics, SalesMaterials, SalesPendingApproval, GoogleSheetsValuesResponse, SalesAITrainingPayload, Lead, ChatCommandPayload, CustomSolutionPayload, WebAIKnowledgeSearchQuery, CRMCredentialsPayload, CRMEvent, InfluencerResearchRequest, InfluencerResearchResponse, AgentSettingsPayload, ScrapeResponse, DashboardKpis, ContactFormPayload, AiReadinessAuditRequest, JobStatusResponse, MiniLeadsForm, LeadGenStartResponse, StrategyCallForm, StrategyCallStartResponse, SimulatorSignup, SimulatorStartResponse, WebsiteReportRequest, WebsiteReportStartResponse, EmailRewriteInitialRequest, EmailTemplate, EmailRewriteDraftData, EmailRewriteInitialResponse, ChatMessage, LeadGenCampaignPerformance, RawLead, MappedLeadForSheet, SupportConversation, SupportStats, SupportSettings, SupportSettingsPayload, SupportAITrainingPayload, SupportPerformanceTrend, WebAIConfigPayload, WebAITrainingPayload, WebAILogEntry, WebAIAnalyticsData, WebAIEmbedData, WebAITrainingResponse, WebAIConfigResponse, PreviousAuditReport, WebAIHistoryItem, WebsiteReportHtmlResponse, WebsiteReportHistoryItem, AIStrategyFormData, SimulatorDayResponse, DashboardUser, RoiJob, MainDashboardData, RecentEvent, SimulatorJob, WebAITrainingDoc, WebAITrainingAckResponse, UnifiedTrainingDoc, AddTrainingDocResponse } from '../types';
+// FIX: Add Integration type to imports.
+import { ResearchReport, SalesInboxStats, SalesMeetingStats, SalesPipelineMetrics, SalesMaterials, SalesPendingApproval, GoogleSheetsValuesResponse, SalesAITrainingPayload, Lead, ChatCommandPayload, CustomSolutionPayload, WebAIKnowledgeSearchQuery, CRMCredentialsPayload, CRMEvent, InfluencerResearchRequest, InfluencerResearchResponse, AgentSettingsPayload, ScrapeResponse, DashboardKpis, ContactFormPayload, AiReadinessAuditRequest, JobStatusResponse, MiniLeadsForm, LeadGenStartResponse, StrategyCallForm, StrategyCallStartResponse, SimulatorSignup, SimulatorStartResponse, WebsiteReportRequest, WebsiteReportStartResponse, EmailRewriteInitialRequest, EmailTemplate, EmailRewriteDraftData, EmailRewriteInitialResponse, ChatMessage, LeadGenCampaignPerformance, RawLead, MappedLeadForSheet, SupportConversation, SupportStats, SupportSettings, SupportSettingsPayload, SupportAITrainingPayload, SupportPerformanceTrend, WebAISettingsPayload, WebAITrainingPayload, WebAIConversationLog, WebAIAnalyticsData, WebAIEmbedData, WebAITrainingResponse, WebAIConfigResponse, PreviousAuditReport, WebAIHistoryItem, WebsiteReportHtmlResponse, WebsiteReportHistoryItem, AIStrategyFormData, SimulatorDayResponse, DashboardUser, RoiJob, MainDashboardData, RecentEvent, SimulatorJob, WebAITrainingDoc, WebAITrainingAckResponse, UnifiedTrainingDoc, AddTrainingDocResponse, Integration, WebAIBotConfig, WebAIDeployment } from '../types';
 // FIX: Added VITE_WEBHOOK_EMAIL_PERSONALIZE_BATCH to the import list.
 // FIX: Add missing VITE_WEBHOOK_EMAIL_TEMPLATES, VITE_WEBHOOK_LEAD_HUNT, and VITE_WEBHOOK_LEAD_RESEARCH variables.
-import { VITE_WEBHOOK_RESEARCH_AI, VITE_GMAIL_CLIENT_ID, VITE_GOOGLE_API_KEY, VITE_SHEET_ID, VITE_WEBHOOK_SALES_AI_TRAIN, VITE_SUPPORT_SHEET_ID, VITE_WEBHOOK_SUPPORT_SETTINGS_SAVE, VITE_WEBHOOK_SUPPORT_AI_TRAIN, VITE_LEADGEN_SHEET_ID, VITE_DEEP_RESEARCH_SHEET_ID, VITE_PERFORMANCE_TRENDS_SHEET_ID, VITE_PERFORMANCE_TRENDS_SHEET_GID, VITE_WEBHOOK_LEAD_RESEARCH_AI_CHAT, VITE_WEBHOOK_CUSTOM_SOLUTION, VITE_WEBHOOK_CUSTOM_SOLUTION_AI, VITE_WEBHOOK_GOOGLE_OAUTH, VITE_WEBHOOK_CRM_SAVE_CREDS, VITE_WEBHOOK_CRM_FETCH_EVENTS, VITE_WEBHOOK_INFLUENCER_RESEARCH, VITE_WEBHOOK_DASHBOARD_KPI, VITE_WEBHOOK_KNOWLEDGE_BASE, VITE_WEBHOOK_AI_ASSISTANT, VITE_WEBHOOK_CONTACT_FORM, VITE_WEBHOOK_AI_READINESS_AUDIT_START, VITE_WEBHOOK_JOB_STATUS, VITE_WEBHOOK_LEAD_GEN_START, VITE_WEBHOOK_STRATEGY_CALL_START, VITE_WEBHOOK_SIMULATOR_START, VITE_WEBHOOK_WEBSITE_REPORT, VITE_WEBHOOK_AI_EMAIL_REWRITE, VITE_EMAIL_TEMPLATES_SHEET_ID, VITE_WEBHOOK_LEADS_APPEND, VITE_WEBHOOK_LEADGEN_SETTINGS, VITE_WEBHOOK_EMAIL_PERSONALIZE, VITE_WEBHOOK_EMAIL_PERSONALIZE_BATCH, VITE_WEBHOOK_OUTREACH_SCHEDULE, VITE_WEBHOOK_EMAIL_PERSONALIZE_SCHEDULE, VITE_WEBHOOK_BATCH_STATUS, VITE_WEBHOOK_LEAD_UPDATE_STATUS, VITE_WEBHOOK_EMAIL_PERSONALIZE_UNIVERSAL_SCHEDULE, VITE_WEBHOOK_OUTREACH_STATUS, VITE_WEBHOOK_WEB_AI_CONFIG, VITE_WEBHOOK_WEB_AI_TRAIN, VITE_WEBHOOK_EMBED_REQUEST, VITE_WEBHOOK_WEB_AI_ANALYTICS, VITE_WEBHOOK_WEB_AI_LOGS, VITE_WEBHOOK_WEB_AI_STATUS, VITE_WEBHOOK_WEB_AI_SEARCH, VITE_WEB_AI_SHEET_ID, VITE_WEBHOOK_GMAIL, VITE_WEBHOOK_ANALYZER_AI, VITE_PREVIOUS_AUDITS_SHEET_ID, VITE_WEBHOOK_EMAIL_TEMPLATES, VITE_WEBHOOK_LEAD_HUNT, VITE_WEBHOOK_LEAD_RESEARCH, VITE_RESEARCH_SHEET_ID, VITE_WEBHOOK_AI_STRATEGY_CALL, VITE_WEBHOOK_AI_STRATEGY_SLOTS, VITE_WEBHOOK_SIMULATOR_CREATE, VITE_WEBHOOK_SIMULATOR_DAY, VITE_WEBHOOK_SIMULATOR_GET_SHEET, VITE_MICROSERVICES_DASHBOARD_SHEET_ID, VITE_MICROSERVICES_ROI_SHEET_ID, VITE_CUSTOM_SOLUTIONS_SHEET_ID, VITE_MAIN_DASHBOARD_SHEET_ID, VITE_WEB_AI_TRAINING_DATA_SHEET_ID, VITE_WEBHOOK_TRAIN_REPLIER } from '../env';
+// FIX: Add VITE_INTEGRATIONS_SHEET_ID to imports.
+import { VITE_WEBHOOK_RESEARCH_AI, VITE_GMAIL_CLIENT_ID, VITE_GOOGLE_API_KEY, VITE_SHEET_ID, VITE_WEBHOOK_SALES_AI_TRAIN, VITE_SUPPORT_SHEET_ID, VITE_WEBHOOK_SUPPORT_SETTINGS_SAVE, VITE_WEBHOOK_SUPPORT_AI_TRAIN, VITE_LEADGEN_SHEET_ID, VITE_DEEP_RESEARCH_SHEET_ID, VITE_PERFORMANCE_TRENDS_SHEET_ID, VITE_PERFORMANCE_TRENDS_SHEET_GID, VITE_WEBHOOK_LEAD_RESEARCH_AI_CHAT, VITE_WEBHOOK_CUSTOM_SOLUTION, VITE_WEBHOOK_CUSTOM_SOLUTION_AI, VITE_WEBHOOK_GOOGLE_OAUTH, VITE_WEBHOOK_CRM_SAVE_CREDS, VITE_WEBHOOK_CRM_FETCH_EVENTS, VITE_WEBHOOK_INFLUENCER_RESEARCH, VITE_WEBHOOK_DASHBOARD_KPI, VITE_WEBHOOK_KNOWLEDGE_BASE, VITE_WEBHOOK_AI_ASSISTANT, VITE_WEBHOOK_CONTACT_FORM, VITE_WEBHOOK_AI_READINESS_AUDIT_START, VITE_WEBHOOK_JOB_STATUS, VITE_WEBHOOK_LEAD_GEN_START, VITE_WEBHOOK_STRATEGY_CALL_START, VITE_WEBHOOK_SIMULATOR_START, VITE_WEBHOOK_WEBSITE_REPORT, VITE_WEBHOOK_AI_EMAIL_REWRITE, VITE_EMAIL_TEMPLATES_SHEET_ID, VITE_WEBHOOK_LEADS_APPEND, VITE_WEBHOOK_LEADGEN_SETTINGS, VITE_WEBHOOK_EMAIL_PERSONALIZE, VITE_WEBHOOK_EMAIL_PERSONALIZE_BATCH, VITE_WEBHOOK_OUTREACH_SCHEDULE, VITE_WEBHOOK_EMAIL_PERSONALIZE_SCHEDULE, VITE_WEBHOOK_BATCH_STATUS, VITE_WEBHOOK_LEAD_UPDATE_STATUS, VITE_WEBHOOK_EMAIL_PERSONALIZE_UNIVERSAL_SCHEDULE, VITE_WEBHOOK_OUTREACH_STATUS, VITE_WEBHOOK_WEB_AI_CONFIG, VITE_WEBHOOK_WEB_AI_TRAIN, VITE_WEBHOOK_EMBED_REQUEST, VITE_WEBHOOK_WEB_AI_ANALYTICS, VITE_WEBHOOK_WEB_AI_LOGS, VITE_WEBHOOK_WEB_AI_STATUS, VITE_WEBHOOK_WEB_AI_SEARCH, VITE_WEB_AI_SHEET_ID, VITE_WEBHOOK_GMAIL, VITE_WEBHOOK_ANALYZER_AI, VITE_PREVIOUS_AUDITS_SHEET_ID, VITE_WEBHOOK_EMAIL_TEMPLATES, VITE_WEBHOOK_LEAD_HUNT, VITE_WEBHOOK_LEAD_RESEARCH, VITE_RESEARCH_SHEET_ID, VITE_WEBHOOK_AI_STRATEGY_CALL, VITE_WEBHOOK_AI_STRATEGY_SLOTS, VITE_WEBHOOK_SIMULATOR_CREATE, VITE_WEBHOOK_SIMULATOR_DAY, VITE_WEBHOOK_SIMULATOR_GET_SHEET, VITE_MICROSERVICES_DASHBOARD_SHEET_ID, VITE_MICROSERVICES_ROI_SHEET_ID, VITE_CUSTOM_SOLUTIONS_SHEET_ID, VITE_MAIN_DASHBOARD_SHEET_ID, VITE_WEB_AI_TRAINING_DATA_SHEET_ID, VITE_WEBHOOK_TRAIN_REPLIER, VITE_INTEGRATIONS_SHEET_ID, VITE_WEB_AI_DEPLOYMENTS_CONFIGS_SHEET_ID, VITE_WEBHOOK_WEB_AI_DEPLOY } from '../env';
 import { computeLeadFields } from '../utils/leadUtils';
 // FIX: Use native Date for date subtraction as 'subDays' is not available.
 import { format } from 'date-fns';
@@ -45,7 +47,7 @@ const handleResponse = async (response: Response) => {
     }
 };
 
-async function postJson(url: string, payload: any, timeoutMs = 90000) {
+async function postJson(url: string, payload: any, timeoutMs = 600000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort("Request timed out"), timeoutMs);
     try {
@@ -268,11 +270,12 @@ export const fetchPreviousAudits = async (userEmail: string): Promise<PreviousAu
 };
 
 // --- Google OAuth Service ---
-export const postGoogleAuthCode = async (code: string): Promise<any> => {
+// FIX: Changed `code: string` to `payload: any` to accept the full object from the callback page.
+export const postGoogleAuthCode = async (payload: any): Promise<any> => {
     const response = await fetch(VITE_WEBHOOK_GOOGLE_OAUTH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify(payload),
     });
     return handleResponse(response);
 };
@@ -292,7 +295,7 @@ export const getDashboardKpis = async (): Promise<DashboardKpis | null> => {
 
 // --- NEW DEEP RESEARCH AI SERVICES (Blueprint-Compliant) ---
 
-export const startResearch = (payload: any) => apiPost('/api/research/start', payload);
+export const startResearch = (payload: any): Promise<ResearchReport[]> => postJson(VITE_WEBHOOK_RESEARCH_AI, payload);
 
 export const getResearchStatus = (runId: string) => apiGet('/api/research/status', { runId });
 
@@ -379,16 +382,9 @@ export const exportReports = (requestIds: string[], format: 'pdf' | 'html' | 'cs
 export const escalateReport = (requestId: string, reason: string) => apiPost('/api/report/escalate', { requestId, reason });
 
 
-// --- FINAL BLUEPRINT Web AI Assistant Services ---
-export const saveWebAIConfig = (payload: WebAIConfigPayload): Promise<WebAIConfigResponse> => {
-    const blueprintPayload = {
-        botName: payload.assistantName,
-        tone: payload.tone,
-        style: payload.style,
-        confidenceThreshold: payload.autoEscalateConfidenceThreshold,
-        ownerEmail: payload.ownerEmail
-    };
-    return postJson(VITE_WEBHOOK_WEB_AI_CONFIG, blueprintPayload);
+// --- FINAL BLUEPRINT Web AI Assistant Services (Updated as per blueprint) ---
+export const saveWebAIConfig = (payload: WebAISettingsPayload): Promise<WebAIConfigResponse> => {
+    return postJson(VITE_WEBHOOK_WEB_AI_CONFIG, payload);
 };
 
 export const submitWebAITraining = (payload: WebAITrainingPayload): Promise<{ status: string, trainedExamples: number }> => {
@@ -415,75 +411,36 @@ export const fetchWebAITrainingData = async (userEmail: string): Promise<any[]> 
     return allDocs.filter(doc => doc.user_email === userEmail);
 };
 
-export const requestEmbedCode = (email: string): Promise<WebAIEmbedData> => postJson(VITE_WEBHOOK_EMBED_REQUEST, { email });
-
-export const fetchWebAIAnalytics = (from: string, to: string): Promise<WebAIAnalyticsData> => getJson(VITE_WEBHOOK_WEB_AI_ANALYTICS, { from, to });
-
-export const fetchWebAILogs = async (from: string, to: string): Promise<WebAILogEntry[]> => {
-    // FIX: Switched to direct Google Sheets API call to fix data fetching issue for logs and analytics.
-    // This is a temporary solution; a server-side proxy is recommended for production.
-    // Using 'Sheet1' as per user's diagnostic snippet, but blueprint suggests 'WebsiteAssistant'.
-    // Using 11 columns (A:K) as per blueprint schema.
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${VITE_WEB_AI_SHEET_ID}/values/Sheet1!A1:K1000?key=${VITE_GOOGLE_API_KEY}`;
-    
-    let data;
-    try {
-        const res = await fetch(url);
-        if (!res.ok) {
-            const text = await res.text().catch(() => '');
-            throw new Error(`Failed to fetch logs from Google Sheets: ${res.status} ${text}`);
-        }
-        data = await res.json();
-    } catch (e) {
-        console.error("Error fetching Web AI Logs:", e);
-        throw e; // re-throw to be caught by the component
-    }
-
-    if (!data || !data.values || data.values.length < 2) {
-        console.warn("No valid data returned from Google Sheets for Web AI Logs.");
-        return [];
-    }
-    
-    const headers = data.values[0] as string[];
-    const headerMap: { [key: string]: number } = {};
-    headers.forEach((h, i) => headerMap[h] = i);
-
-    const logs: WebAILogEntry[] = data.values.slice(1).map((row: any[]) => ({
-        "Timestamp": row[headerMap["Timestamp"]],
-        "Customer Name": row[headerMap["Customer Name"]],
-        "Customer Email": row[headerMap["Customer Email"]],
-        "Bot Name": row[headerMap["Bot Name"]],
-        "User Message": row[headerMap["User Message"]],
-        "Bot Reply": row[headerMap["Bot Reply"]],
-        "Intent/Category": row[headerMap["Intent/Category"]],
-        "Meeting Date": row[headerMap["Meeting Date"]],
-        "Meeting Topic": row[headerMap["Meeting Topic"]],
-        "Ticket Status": row[headerMap["Ticket Status"]],
-        "Escalation/Notes": row[headerMap["Escalation/Notes"]],
-    }));
-
-    // Perform date filtering on the client side
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-    toDate.setDate(toDate.getDate() + 1); // include the whole 'to' day
-
-    return logs.filter(log => {
-        const logDate = new Date(log.Timestamp);
-        return logDate >= fromDate && logDate < toDate;
-    });
+export const generateEmbedCode = (payload: { requested_by: string; bot_name: string; domain_allowed: string; }): Promise<WebAIEmbedData> => {
+    return postJson(VITE_WEBHOOK_WEB_AI_DEPLOY, payload);
 };
 
-export const getTodaysWebAIConversations = async (): Promise<WebAIHistoryItem[]> => {
-    const to = new Date();
-    // FIX: Use native Date for date subtraction.
-    const from = new Date(to);
-    from.setDate(from.getDate() - 1);
-    const fromStr = format(from, 'yyyy-MM-dd');
-    const toStr = format(to, 'yyyy-MM-dd');
-    return fetchWebAILogs(fromStr, toStr);
+export const fetchWebAILogs = async (userEmail: string, botName: string): Promise<WebAIConversationLog[]> => {
+    const values = await getFromGoogleSheet(VITE_WEB_AI_SHEET_ID, 'ConversationLogs');
+    const allLogs = mapSheetValuesToObjects<WebAIConversationLog>(values);
+    // The owner needs to see all conversations for their bot.
+    return allLogs.filter(log => log.bot_name === botName);
 };
 
-export const postWebAIMessage = (payload: { sessionId: string; idempotencyKey: string; message: string; assistantName: string; }): Promise<{ aiResponse: string }> => {
+export const fetchBotConfig = async (userEmail: string): Promise<WebAIBotConfig | null> => {
+    const values = await getFromGoogleSheet(VITE_WEB_AI_DEPLOYMENTS_CONFIGS_SHEET_ID, 'BotConfigs');
+    const allConfigs = mapSheetValuesToObjects<WebAIBotConfig>(values);
+    return allConfigs.find(config => config.user_email_owner === userEmail) || null;
+};
+
+export const fetchDeployments = async (userEmail: string): Promise<WebAIDeployment[]> => {
+    const values = await getFromGoogleSheet(VITE_WEB_AI_DEPLOYMENTS_CONFIGS_SHEET_ID, 'Deployments');
+    const allDeployments = mapSheetValuesToObjects<WebAIDeployment>(values);
+    return allDeployments.filter(dep => dep.user_email === userEmail);
+};
+
+export const getTodaysWebAIConversations = async (userEmail: string, botName: string): Promise<WebAIHistoryItem[]> => {
+    const allLogs = await fetchWebAILogs(userEmail, botName);
+    const today = new Date().toISOString().slice(0, 10);
+    return allLogs.filter(log => log.Timestamp.startsWith(today));
+};
+
+export const postWebAIMessage = (payload: { sessionId: string; idempotencyKey?: string; message: string; bot_name: string; user_email: string; metadata?: any }): Promise<{ bot_reply_text: string }> => {
     return postJson(VITE_WEBHOOK_WEB_AI_SEARCH, payload);
 };
 
@@ -607,6 +564,14 @@ export const fetchCoreServiceData = (sheetId: string, range: string, userEmail: 
                     return obj;
                 });
         });
+
+// --- Integrations ---
+// FIX: Add missing fetchIntegrations function.
+export const fetchIntegrations = async (): Promise<Integration[]> => {
+    const values = await getFromGoogleSheet(VITE_INTEGRATIONS_SHEET_ID, 'Sheet1');
+    const allIntegrations = mapSheetValuesToObjects<Integration>(values);
+    return allIntegrations;
+};
 
 // --- CRM ---
 export const fetchCRMEvents = (payload: CRMCredentialsPayload): Promise<CRMEvent[]> => postJson(VITE_WEBHOOK_CRM_FETCH_EVENTS, payload);

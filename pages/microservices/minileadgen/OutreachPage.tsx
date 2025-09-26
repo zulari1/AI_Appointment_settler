@@ -31,14 +31,9 @@ const HowItWorksHeader: React.FC = () => {
             </div>
         </div>
     );
-};interface CampaignSettingsFormProps {
-  settings: any;
-  setSettings: Function;
-  validationErrors: string[];
-}
+};
 
-
-const CampaignSettingsForm: React.FC<CampaignSettingsFormProps> = 
+const CampaignSettingsForm: React.FC<{ settings: any, setSettings: Function, validationErrors: string[] }> = 
 ({ settings, setSettings, validationErrors }) => {
     const handleWeekdaysChange = (dayIndex: number) => {
         const newWeekdays = settings.weekdays.includes(dayIndex)
@@ -81,13 +76,9 @@ const CampaignSettingsForm: React.FC<CampaignSettingsFormProps> =
             )}
         </div>
     );
-};interface CampaignCalendarPreviewProps {
-  leadsCount: number;
-  settings: any;
-}
+};
 
-
-const CampaignCalendarPreview: React.FC<CampaignCalendarPreviewProps> = ({ leadsCount, settings }) => {
+const CampaignCalendarPreview: React.FC<{ leadsCount: number, settings: any }> = ({ leadsCount, settings }) => {
     if (leadsCount === 0 || !settings.startAt) return null;
 
     const startDate = new Date(settings.startAt);
@@ -141,13 +132,9 @@ const LeadsForCampaignTable: React.FC<{ leads: Lead[], selectedLeads: Set<number
             </div>
         </div>
     );
-};interface AnalyticsDashboardProps {
-  analytics: any;
-  campaignId: string;
-}
+};
 
-
-const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ analytics, campaignId }) => {
+const AnalyticsDashboard: React.FC<{ analytics: any, campaignId: string }> = ({ analytics, campaignId }) => {
     if (!analytics) {
         return (
             <div className="bg-dark-card border border-dark-border rounded-xl p-6 animate-fade-in text-center">

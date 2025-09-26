@@ -11,9 +11,14 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false
-  };
+  // FIX: Using a constructor is the standard and safest way to initialize state in a class component, ensuring `this.props` is available via `super(props)` before `this.state` is accessed. This resolves errors where `this.state` or `this.props` might not be found.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+    };
+  }
 
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };

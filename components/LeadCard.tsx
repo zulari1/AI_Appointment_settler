@@ -9,12 +9,9 @@ interface LeadCardProps {
     onPersonalize: (lead: Lead) => void;
     onChat: (lead: Lead) => void;
     onCardClick: (lead: Lead) => void;
-}interface PipelineBadgeProps {
-  progress: string;
 }
 
-
-const PipelineBadge: React.FC<PipelineBadgeProps> = ({ progress }) => {
+const PipelineBadge: React.FC<{ progress: string }> = ({ progress }) => {
     switch(progress) {
         case 'Research': return <div className="text-xs font-semibold px-2 py-1 rounded-full bg-sky-500/10 text-sky-400">✅ Analyzed by Agent 2</div>;
         case 'Personalize': return <div className="text-xs font-semibold px-2 py-1 rounded-full bg-purple-500/10 text-purple-400">✉️ Personalized by Agent 3</div>;

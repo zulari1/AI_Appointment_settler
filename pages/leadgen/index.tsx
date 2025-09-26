@@ -1,9 +1,5 @@
 
 
-
-
-
-
 import React from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import OverviewPage from './OverviewPage';
@@ -14,6 +10,7 @@ import OutreachPage from './OutreachPage';
 import ReplierPage from './ReplierPage';
 import ReplierTrainingPage from './ReplierTrainingPage';
 import { ICONS } from '../../constants';
+import IntegrationBanner from '../../components/IntegrationBanner';
 
 // FIX: Change icon type to React.ReactElement to allow cloning with props.
 const agentNavLinks: { path: string, name: string, icon: React.ReactElement }[] = [
@@ -34,17 +31,9 @@ const LeadGenerationPage: React.FC = () => {
         if (currentLink) return currentLink.name;
         return 'Overview';
     }
-
-    return (
-        <div className="space-y-6">
-            <header>
-                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                    <span className="text-brand-accent">{ICONS.leads}</span>
-                    <span>Lead Generation: {getPageTitle()}</span>
-                </h1>
-                <p className="text-dark-text-secondary mt-1">Four-agent pipeline to find, enrich, personalize, and contact new leads.</p>
-            </header>
-
+    
+    const pageContent = (
+        <>
             <nav className="flex space-x-1 border-b border-dark-border overflow-x-auto pb-1">
                 {agentNavLinks.map((link, index) => (
                      <NavLink
@@ -79,6 +68,22 @@ const LeadGenerationPage: React.FC = () => {
                     <Route path="replier-training" element={<ReplierTrainingPage />} />
                 </Routes>
             </div>
+        </>
+    );
+
+    return (
+        <div className="space-y-6">
+            <header>
+                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                    <span className="text-brand-accent">{ICONS.leads}</span>
+                    <span>Lead Generation: {getPageTitle()}</span>
+                </h1>
+                <p className="text-dark-text-secondary mt-1">Four-agent pipeline to find, enrich, personalize, and contact new leads.</p>
+            </header>
+
+            <IntegrationBanner serviceName="Lead Gen AI" required={['Gmail']}>
+                {pageContent}
+            </IntegrationBanner>
         </div>
     );
 };

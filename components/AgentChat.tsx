@@ -18,13 +18,9 @@ const Spinner: React.FC = () => (
         </svg>
         <p className="ml-4 text-dark-text-secondary">Generating AI response...</p>
     </div>
-);interface SummaryCardProps {
-  data: ChatSummaryItem;
-  lead: Lead;
-}
+);
 
-
-const SummaryCard: React.FC<SummaryCardProps> = ({ data, lead }) => (
+const SummaryCard: React.FC<{ data: ChatSummaryItem, lead: Lead }> = ({ data, lead }) => (
     <div className="p-4 bg-dark-bg rounded-lg space-y-4">
         <div>
             <h4 className="text-lg font-semibold text-white">{data.contact?.name || lead.displayName}</h4>
@@ -45,12 +41,9 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ data, lead }) => (
             {(data.contact?.website || lead.websiteUrl) && <a href={data.contact?.website || lead.websiteUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-3 py-1 border border-dark-border rounded-full hover:bg-dark-border">Website</a>}
         </div>
     </div>
-);interface ScoreCardProps {
-  data: ChatScoreItem;
-}
+);
 
-
-const ScoreCard: React.FC<ScoreCardProps> = ({ data }) => {
+const ScoreCard: React.FC<{ data: ChatScoreItem }> = ({ data }) => {
     const scoreColor = data.score >= 80 ? 'text-green-400' : data.score >= 60 ? 'text-amber-400' : 'text-red-400';
     
     return (

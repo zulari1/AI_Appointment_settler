@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ICONS } from '../constants';
+import { useIntegrations } from '../hooks/useIntegrations';
+
+const IntegrationStatusIcon: React.FC<{ type: 'Gmail' | 'Calendar' }> = ({ type }) => {
+    const { getIntegration } = useIntegrations();
+    const integration = getIntegration(type);
+    const isConnected = integration?.status === 'Connected';
+    const icon = type === 'Gmail' ? '✉️' : '📅';
+    const title = `${type} is ${isConnected ? 'Connected' : 'Not Connected'}`;
+
+    return (
+        <Link to="/management/integrations" title={title} className="relative">
+            <span className="text-lg">{icon}</span>
+            <span className={`absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border border-dark-card ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+        </Link>
+    );
+};
 
 interface HeaderProps {
     setSidebarOpen: (open: boolean) => void;
@@ -35,6 +52,11 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
             </button>
             <div className="flex-1 flex justify-end items-center">
                 <div className="flex items-center space-x-4 md:space-x-6">
+                    <div className="flex items-center gap-4">
+                        <IntegrationStatusIcon type="Gmail" />
+                        <IntegrationStatusIcon type="Calendar" />
+                    </div>
+
                     <select 
                         value={role} 
                         onChange={(e) => setRole(e.target.value)}

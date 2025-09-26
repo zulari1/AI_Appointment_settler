@@ -152,13 +152,9 @@ const ResultModal: React.FC<{ output: SimulatorDayOutput | null, onClose: () => 
             )}
         </AnimatePresence>
     );
-};interface RunModalProps {
-  day: number;
-  description: string;
-}
+};
 
-
-const RunModal: React.FC<RunModalProps> = ({ day, description }) => {
+const RunModal: React.FC<{ day: number, description: string }> = ({ day, description }) => {
     const stages = [ "Initializing AI Agent...", "Analyzing your business data...", "Generating insights and report...", "Finalizing deliverables..." ];
     const [currentStage, setCurrentStage] = useState(0);
 
@@ -180,12 +176,9 @@ const RunModal: React.FC<RunModalProps> = ({ day, description }) => {
             </div>
         </div>
     );
-};interface ProgressTrackerProps {
-  completedDays: number;
-}
+};
 
-
-const ProgressTracker: React.FC<ProgressTrackerProps> = ({ completedDays }) => (
+const ProgressTracker: React.FC<{ completedDays: number }> = ({ completedDays }) => (
     <div className="flex items-center justify-center gap-2 md:gap-4">
         {[1,2,3,4,5].map(day => (
             <React.Fragment key={day}>

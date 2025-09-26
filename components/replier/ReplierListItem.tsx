@@ -18,21 +18,14 @@ const statusColorMap: { [key: string]: string } = {
     completed: 'bg-green-500',
     escalated: 'bg-red-500',
     'in progress': 'bg-sky-500'
-};interface ConfidenceBadgeProps {
-  score: number;
-  category: string;
-}
+};
 
-
-const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({ score, category }) => {
+const ConfidenceBadge: React.FC<{ score: number, category: string }> = ({ score, category }) => {
     const color = category === 'high' ? 'text-green-400' : category === 'medium' ? 'text-amber-400' : 'text-red-400';
     return <span className={`font-bold text-xs ${color}`}>{score}%</span>;
-};interface QuickIconsProps {
-  row: ReplierRow;
-}
+};
 
-
-const QuickIcons: React.FC<QuickIconsProps> = ({ row }) => (
+const QuickIcons: React.FC<{ row: ReplierRow }> = ({ row }) => (
     <div className="flex items-center gap-2 text-dark-text-secondary/60">
         {row['Google Calendar Link'] && React.cloneElement(ICONS.calendar, {className: 'h-3 w-3'})}
         {row['Email Thread Link'] && React.cloneElement(ICONS.email, {className: 'h-3 w-3'})}

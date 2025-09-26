@@ -1,3 +1,6 @@
+// FIX: Import React to use React.ReactNode type.
+import React from 'react';
+
 // --- New Research AI Types (Blueprint-Compliant) ---
 export type ResearchReport = {
   date: string; // YYYY-MM-DD
@@ -33,38 +36,69 @@ export interface LeadGenCampaignPerformance {
     responseRate: string;
 }
 
-// --- FINAL BLUEPRINT: Web AI Assistant Types ---
+// --- FINAL BLUEPRINT: Web AI Assistant Types (Updated as per new blueprint) ---
 
-export interface WebAILogEntry {
-    "Timestamp": string;
-    "Customer Name": string;
-    "Customer Email": string;
-    "Bot Name": string;
-    "User Message": string;
-    "Bot Reply": string;
-    "Intent/Category": string;
-    "Meeting Date"?: string;
-    "Meeting Topic"?: string;
-    "Ticket Status"?: string;
-    "Escalation/Notes"?: string;
-    "BotReplyAt"?: string; // Optional, for avg response time
+export interface WebAIConversationLog {
+  Timestamp: string;
+  customer_name: string;
+  customer_email: string;
+  bot_name: string;
+  session_id: string;
+  user_message: string;
+  bot_reply_text: string;
+  intent: string;
+  meeting_date?: string;
+  meeting_topic?: string;
+  ticket_status?: string;
+  escalation_notes?: string;
+  bot_latency_ms?: string;
+  message_type?: 'user' | 'bot' | 'system';
 }
 
-// Alias for backwards compatibility with DashboardPage
-export type WebAIHistoryItem = WebAILogEntry;
+// Alias for backwards compatibility where needed
+export type WebAIHistoryItem = WebAIConversationLog;
 
-
-export interface WebAIConfigPayload {
-  ownerEmail: string;
-  assistantName: string;
-  welcomeMessage: string;
-  tone: string;
-  style: string;
-  autoEscalateConfidenceThreshold: number;
+export interface WebAIDeployment {
+    user_email: string;
+    bot_name: string;
+    embed_id: string;
+    embed_url: string;
+    embed_snippet: string;
+    domain_allowed: string;
+    issued_at: string;
+    issued_by: string;
+    status: 'Active' | 'Revoked' | 'Pending';
+    last_used_at: string;
+    instructions_link: string;
+    notes: string;
 }
+
+export interface WebAIBotConfig {
+    bot_name: string;
+    user_email_owner: string;
+    default_response_style: 'concise' | 'sales' | 'friendly' | 'formal' | 'casual' | 'empathetic' | 'professional';
+    escalation_rules_json: string;
+    calendar_connected: 'TRUE' | 'FALSE';
+    email_connected: 'TRUE' | 'FALSE';
+    training_sheet_url: string;
+    active_domains_csv: string;
+    created_at: string;
+    updated_at: string;
+}
+
+// Payload for the settings form, as per the new blueprint
+export interface WebAISettingsPayload {
+  tone: 'formal' | 'casual' | 'empathetic' | 'professional';
+  escalation_rules: string;
+  greeting: string;
+  fallback: string;
+  booking_enabled: boolean;
+  user_email: string;
+}
+
 
 export interface WebAIConfigResponse {
-  status: "ok" | "error";
+  status: "ok" | "error" | "success";
   settingsId?: string;
   message?: string;
 }
@@ -101,9 +135,11 @@ export interface WebAIAnalyticsData {
 }
 
 export interface WebAIEmbedData {
-    clientId: string;
-    embedCode: string;
-    previewUrl: string;
+    status: "ok";
+    embed_id: string;
+    embed_url: string;
+    embed_snippet: string;
+    expires_at: string;
 }
 
 // Updated WebAITrainingDoc to match the new 'Training' sheet schema.
@@ -521,7 +557,7 @@ export interface ResearchDoc {
 }
 
 export interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   text: string;
   isLoading?: boolean;
 }
@@ -656,6 +692,23 @@ export interface GoogleSheetsValuesResponse {
   majorDimension: string;
   values: any[][];
 }
+
+// --- Integrations ---
+export interface Integration {
+  user_email: string;
+  service_name: string;
+  integration_type: 'Gmail' | 'Calendar';
+  account_email: string;
+  token_id: string;
+  token_store_hint: string;
+  status: 'Connected' | 'Disconnected' | 'Expired' | 'Error';
+  scopes: string;
+  connected_date: string;
+  expires_at: string;
+  last_verified: string;
+  notes: string;
+}
+
 
 // --- CRM Automation Types ---
 export type CRMPlatform = 'shopify' | 'woocommerce' | 'bigcommerce' | 'other';

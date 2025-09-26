@@ -16,15 +16,8 @@ const parsePercent = (s: string = ''): number => {
 };
 const stripQuotes = (s: string = ''): string => s.replace(/^"+|"+$/g, '').trim();
 
-// --- Sub-components ---interface AnimatedCounterProps {
-  value: number;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
-}
-
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = "", suffix = "", decimals = 0 }) => {
+// --- Sub-components ---
+const AnimatedCounter: React.FC<{ value: number, prefix?: string, suffix?: string, decimals?: number }> = ({ value, prefix = "", suffix = "", decimals = 0 }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
     useEffect(() => {
         const controls = animate(animatedValue, value, {
@@ -34,12 +27,9 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = "", s
         return controls.stop;
     }, [value]);
     return <span>{prefix}{animatedValue.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</span>;
-};interface GapPanelProps {
-  metrics: any;
-}
+};
 
-
-const GapPanel: React.FC<GapPanelProps> = ({ metrics }) => (
+const GapPanel: React.FC<{ metrics: any }> = ({ metrics }) => (
     <div className="bg-dark-card border border-dark-border rounded-xl p-6">
         <h2 className="text-xl font-bold text-white mb-4 text-center">🚨 YOUR LEAD GENERATION GAP</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -156,12 +146,9 @@ const TrainingHub: React.FC<{ onAddTemplate: (docType: string) => void }> = ({ o
             </div>
         </div>
     );
-};interface TemplateListProps {
-  docs: any[];
-}
+};
 
-
-const TemplateList: React.FC<TemplateListProps> = ({ docs }) => (
+const TemplateList: React.FC<{ docs: any[] }> = ({ docs }) => (
     <div className="bg-dark-card border border-dark-border rounded-xl p-6">
         <h2 className="text-xl font-bold text-white">Current Response Templates</h2>
         <div className="space-y-2 mt-4 max-h-60 overflow-y-auto pr-2">
@@ -176,13 +163,9 @@ const TemplateList: React.FC<TemplateListProps> = ({ docs }) => (
             )) : <p className="text-center text-sm text-dark-text-secondary py-8">No templates trained yet. Add one above!</p>}
         </div>
     </div>
-);interface ProgressRewardsZoneProps {
-  iq: number;
-  docCount: number;
-}
+);
 
-
-const ProgressRewardsZone: React.FC<ProgressRewardsZoneProps> = ({ iq, docCount }) => {
+const ProgressRewardsZone: React.FC<{ iq: number, docCount: number }> = ({ iq, docCount }) => {
     const achievements = [
         { name: 'Beginner', threshold: 5, icon: '🏆' },
         { name: 'Conversion Pro', threshold: 20, icon: '🚀' },

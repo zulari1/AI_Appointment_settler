@@ -32,14 +32,9 @@ const extractSection = (html: string, title: string): string | null => {
         console.error("Error parsing HTML for section extraction:", e);
         return `<p>Error parsing report section.</p>`;
     }
-};interface SectionProps {
-  title: string;
-  content: string | null | undefined;
-  icon?: React.ReactNode;
-}
+};
 
-
-const Section: React.FC<SectionProps> = ({ title, content, icon }) => {
+const Section: React.FC<{title: string, content: string | null | undefined, icon?: React.ReactNode}> = ({ title, content, icon }) => {
     if (!content) return <p className="text-dark-text-secondary text-center py-8">No data available for this section.</p>;
     return (
          <div className="py-3">

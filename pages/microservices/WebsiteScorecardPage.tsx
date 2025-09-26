@@ -149,7 +149,7 @@ const InitialForm: React.FC<{ onStartAnalysis: (data: WebsiteReportRequest, dept
                         Run Quick Scan
                     </button>
                 </div>
-            </form>
+            </div>
             <aside className="lg:col-span-1 bg-dark-bg border border-dark-border rounded-xl p-4 space-y-3 h-fit">
                 <h3 className="font-bold text-white text-center">🤖 AI Copilot</h3>
                 <div className="bg-dark-card p-3 rounded-lg text-sm"><p className="font-semibold text-brand-accent">💡 Smart Insight</p><p className="text-xs mt-1">Websites that fix the top 3 conversion issues see a 15% lift on average.</p></div>
@@ -168,12 +168,9 @@ const ProcessingState: React.FC = () => (
         <h2 className="text-2xl font-bold text-white mt-4">AI is analyzing your website...</h2>
         <p className="text-dark-text-secondary">This can take up to a few minutes. Please don't close this tab.</p>
     </div>
-);interface HtmlRendererProps {
-  htmlContent: string;
-}
+);
 
-
-const HtmlRenderer: React.FC<HtmlRendererProps> = ({ htmlContent }) => {
+const HtmlRenderer: React.FC<{ htmlContent: string }> = ({ htmlContent }) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     useEffect(() => {
@@ -232,12 +229,9 @@ const scoreToColor = (scoreValue: number): { text: string; } => {
     if (scoreValue >= 80) return { text: 'text-sky-400' }; // blue
     if (scoreValue >= 70) return { text: 'text-amber-400' }; // yellow
     return { text: 'text-red-500' }; // red
-};interface ScoreGaugeProps {
-  score: string;
-}
+};
 
-
-const ScoreGauge: React.FC<ScoreGaugeProps> = ({ score }) => {
+const ScoreGauge: React.FC<{ score: string }> = ({ score }) => {
     const numericScore = useMemo(() => scoreToNumber(score), [score]);
     const color = useMemo(() => scoreToColor(numericScore), [numericScore]);
     const circumference = 2 * Math.PI * 20; // radius = 20

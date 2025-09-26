@@ -11,13 +11,8 @@ import AgentChat from '../../components/AgentChat';
 import { ICONS } from '../../constants';
 import InfoTooltip from '../../components/InfoTooltip';
 
-const PageHeader: React.FC = () => {interface PipelineStepProps {
-  name: string;
-  active?: boolean;
-}
-
-
-const PipelineStep: React.FC<PipelineStepProps> = ({ name, active }) => (
+const PageHeader: React.FC = () => {
+    const PipelineStep: React.FC<{ name: string, active?: boolean }> = ({ name, active }) => (
         <div className={`flex-1 text-center py-2 px-1 border-b-2 ${active ? 'border-brand-primary text-white' : 'border-dark-border text-dark-text-secondary'}`}>
             <span className="font-semibold text-sm">{name}</span>
         </div>
@@ -108,12 +103,9 @@ const LeadJoeChat: React.FC<{ onStartHunt: (prompt: string) => void, isHunting: 
             </div>
         </div>
     );
-};interface AnalyticsSectionProps {
-  stats: any;
-}
+};
 
-
-const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ stats }) => (
+const AnalyticsSection: React.FC<{ stats: any }> = ({ stats }) => (
     <div className="bg-dark-card border border-dark-border rounded-xl p-6">
         <h3 className="text-xl font-bold text-white mb-4">Your Lead Hunt Progress</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">

@@ -12,12 +12,9 @@ const formatFollowers = (count: number): string => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
     if (count >= 1000) return `${(count / 1000).toFixed(0)}K`;
     return String(count);
-};interface InfluencerResultContentProps {
-  result: InfluencerResearchResponse;
-}
+};
 
-
-const InfluencerResultContent: React.FC<InfluencerResultContentProps> = ({ result }) => (
+const InfluencerResultContent: React.FC<{ result: InfluencerResearchResponse }> = ({ result }) => (
     <>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-dark-border pb-4 mb-4">
             <div>

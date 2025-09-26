@@ -104,14 +104,9 @@ const UniversalPersonalizationForm: React.FC<{
             </div>
         </form>
     );
-};interface LeadsTableProps {
-  leads: Lead[];
-  isLoading: boolean;
-  scheduled: boolean;
-}
+};
 
-
-const LeadsTable: React.FC<LeadsTableProps> = ({ leads, isLoading, scheduled }) => {
+const LeadsTable: React.FC<{ leads: Lead[], isLoading: boolean, scheduled: boolean }> = ({ leads, isLoading, scheduled }) => {
     if (isLoading) return <div className="text-center p-8 text-dark-text-secondary">Loading leads...</div>;
     if (leads.length === 0) return <div className="text-center p-8 text-dark-text-secondary">No eligible leads found. Go to the Researcher to analyze more leads.</div>;
 

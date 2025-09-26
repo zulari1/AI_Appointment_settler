@@ -1,31 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ICONS } from '../constants';
-import GoogleConnectPrompt from '../components/GmailConnectPrompt';
+import IntegrationBanner from '../components/IntegrationBanner';
 
 const CalendarAIPage: React.FC = () => {
-    const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
-    useEffect(() => {
-        const checkConnection = () => {
-            setIsGoogleConnected(localStorage.getItem('googleServicesConnected') === 'true');
-        };
-        checkConnection();
-        window.addEventListener('storage', checkConnection);
-        return () => window.removeEventListener('storage', checkConnection);
-    }, []);
-
-    const handleDisconnect = () => {
-        localStorage.removeItem('googleServicesConnected');
-        setIsGoogleConnected(false);
-    };
-
-    // OAUTH GATING TEMPORARILY DISABLED FOR TESTING
-    // if (!isGoogleConnected) {
-    //     return <GoogleConnectPrompt service="calendar" />;
-    // }
-
-    return (
-        <div className="space-y-8">
+    const pageContent = (
+         <div className="space-y-8">
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                  <div>
                     <h1 className="text-3xl font-bold text-white flex items-center gap-3">
@@ -33,13 +13,6 @@ const CalendarAIPage: React.FC = () => {
                         <span>Calendar AI</span>
                     </h1>
                     <p className="text-dark-text-secondary mt-1">Automate meeting schedules and manage your events with AI.</p>
-                </div>
-                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase text-green-400 bg-green-900/50 px-2 py-1 rounded-full flex items-center gap-1.5">
-                        {React.cloneElement(ICONS.calendar, {className: "h-4 w-4"})}
-                        GOOGLE CONNECTED
-                    </span>
-                    <button onClick={handleDisconnect} className="text-xs text-red-400 hover:text-red-300 hover:underline">Disconnect</button>
                 </div>
             </header>
 
@@ -65,6 +38,12 @@ const CalendarAIPage: React.FC = () => {
             </div>
         </div>
     );
+
+    return (
+         <IntegrationBanner serviceName="Calendar AI" required={['Calendar']}>
+            {pageContent}
+        </IntegrationBanner>
+    )
 };
 
 export default CalendarAIPage;

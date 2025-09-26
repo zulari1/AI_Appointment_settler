@@ -10,14 +10,8 @@ import AgentChat from '../../components/AgentChat';
 import { ICONS } from '../../constants';
 import { motion } from 'framer-motion';
 
-const PageHeader: React.FC = () => {interface PipelineStepProps {
-  num: number;
-  name: string;
-  active?: boolean;
-}
-
-
-const PipelineStep: React.FC<PipelineStepProps> = ({ num, name, active }) => (
+const PageHeader: React.FC = () => {
+    const PipelineStep: React.FC<{ num: number, name: string, active?: boolean }> = ({ num, name, active }) => (
         <div className="flex items-center gap-2">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ring-1 flex-shrink-0 ${active ? 'bg-brand-primary text-white ring-brand-primary' : 'bg-dark-bg text-dark-text-secondary ring-dark-border'}`}>
                 {num}
@@ -45,12 +39,9 @@ const PipelineStep: React.FC<PipelineStepProps> = ({ num, name, active }) => (
             <p className="text-center text-xs text-brand-accent font-semibold mt-2">“This is where raw contacts turn into actionable intelligence.”</p>
         </div>
     );
-};interface ResearchingIndicatorProps {
-  leadName: string;
-}
+};
 
-
-const ResearchingIndicator: React.FC<ResearchingIndicatorProps> = ({ leadName }) => {
+const ResearchingIndicator: React.FC<{ leadName: string }> = ({ leadName }) => {
     const stages = ["Gathering info", "Building Person Profile", "Finding Company Profile", "Scanning for Similarities", "Identifying Pain Points & Solutions"];
     const [currentStageIndex, setCurrentStageIndex] = useState(0);
 
@@ -135,13 +126,9 @@ const LeadTable: React.FC<{
             </tbody>
         </table>
     </div>
-);interface AnalyticsSectionProps {
-  researched: number;
-  total: number;
-}
+);
 
-
-const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ researched, total }) => {
+const AnalyticsSection: React.FC<{ researched: number, total: number }> = ({ researched, total }) => {
     const avgScore = 72; // Mocked for now
     return (
         <div className="bg-dark-card border border-dark-border rounded-xl p-6">

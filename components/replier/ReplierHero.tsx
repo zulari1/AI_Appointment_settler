@@ -10,12 +10,9 @@ interface ReplierHeroProps {
     onOpenSettings: () => void;
     isPaused: boolean;
     setIsPaused: (paused: boolean) => void;
-}interface SyncStatusLineProps {
-  syncStatus: ReplierHeroProps['syncStatus'];
 }
 
-
-const SyncStatusLine: React.FC<SyncStatusLineProps> = ({ syncStatus }) => {
+const SyncStatusLine: React.FC<{ syncStatus: ReplierHeroProps['syncStatus'] }> = ({ syncStatus }) => {
     const { status, lastSync } = syncStatus;
 
     const statusMap = {

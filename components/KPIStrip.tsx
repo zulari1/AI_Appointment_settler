@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { animate } from 'framer-motion';interface KpiItemProps {
-  label: string;
-  value: number;
-}
+import { animate } from 'framer-motion';
 
-
-const KpiItem: React.FC<KpiItemProps> = ({ label, value }) => {
+const KpiItem: React.FC<{ label: string, value: number }> = ({ label, value }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
 
     useEffect(() => {

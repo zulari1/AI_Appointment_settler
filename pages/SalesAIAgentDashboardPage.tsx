@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { motion, AnimatePresence, animate } from 'framer-motion';
-import * as salesService from '../../services/salesService';
-import * as n8n from '../../services/n8nService';
-import { deriveRow } from '../../utils/salesUtils';
-import { computeKpisRobust } from '../../utils/computeKpisRobust';
-import { SalesRow, SalesFilter, SalesKpis, UnifiedTrainingDoc, AddTrainingDocResponse, WebAITrainingDoc, SalesEscalationRules } from '../../types';
-import { computeSalesAgentIQ } from '../../utils/trainingUtils';
-import ActionNotification from '../../components/ActionNotification';
+import * as salesService from '../services/salesService';
+import * as n8n from '../services/n8nService';
+import { deriveRow } from '../utils/salesUtils';
+import { computeKpisRobust } from '../utils/computeKpisRobust';
+import { SalesRow, SalesFilter, SalesKpis, UnifiedTrainingDoc, AddTrainingDocResponse, WebAITrainingDoc, SalesEscalationRules } from '../types';
+import { computeSalesAgentIQ } from '../utils/trainingUtils';
+import ActionNotification from '../components/ActionNotification';
 import SalesHero from '../components/sales/SalesHero';
 import SalesFilterBar from '../components/sales/SalesFilterBar';
 import SalesList from '../components/sales/SalesList';
 import SalesDetailDrawer from '../components/sales/SalesDetailDrawer';
 import SalesSettingsModal from '../components/sales/SalesSettingsModal';
+import IntegrationBanner from '../components/IntegrationBanner';
 
 type View = 'inbox' | 'training';
 
@@ -24,15 +25,9 @@ const parsePercent = (s: string = ''): number => {
     const num = parseFloat(String(s).replace('%', ''));
     return Number.isFinite(num) ? num : 0;
 };
-const stripQuotes = (s: string = '') => s.replace(/^"+|"+$/g, '').trim();interface AnimatedCounterProps {
-  value: number;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
-}
+const stripQuotes = (s: string = '') => s.replace(/^"+|"+$/g, '').trim();
 
-
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = '', suffix = '', decimals = 0 }) => {
+const AnimatedCounter: React.FC<{ value: number, prefix?: string, suffix?: string, decimals?: number }> = ({ value, prefix = '', suffix = '', decimals = 0 }) => {
     const [animatedValue, setAnimatedValue] = useState(0);
 
     useEffect(() => {
@@ -48,12 +43,9 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = '', s
 };
 
 
-// --- New Sales AI Training View Components ---interface RevenueLeakagePanelProps {
-  data: any;
-}
+// --- New Sales AI Training View Components ---
 
-
-const RevenueLeakagePanel: React.FC<RevenueLeakagePanelProps> = ({ data }) => (
+const RevenueLeakagePanel: React.FC<{ data: any }> = ({ data }) => (
     <div className="bg-dark-bg border border-dark-border rounded-xl p-4">
         <h3 className="text-lg font-bold text-white mb-2">💸 REVENUE LEAKAGE</h3>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -67,13 +59,9 @@ const RevenueLeakagePanel: React.FC<RevenueLeakagePanelProps> = ({ data }) => (
             <p className="text-xs text-red-400/80">⚠️ At Risk (lost to competitors / missed follow-up)</p>
         </div>
     </div>
-);interface SalesIQMeterProps {
-  iq: number;
-  docs: UnifiedTrainingDoc[];
-}
+);
 
-
-const SalesIQMeter: React.FC<SalesIQMeterProps> = ({ iq, docs }) => (
+const SalesIQMeter: React.FC<{ iq: number, docs: UnifiedTrainingDoc[] }> = ({ iq, docs }) => (
     <div className="bg-dark-bg border border-dark-border rounded-xl p-4">
         <h3 className="text-lg font-bold text-white mb-2">🎯 SALES IQ METER</h3>
         <div className="flex items-center gap-4">
@@ -257,16 +245,15 @@ const SalesAITrainingView: React.FC = () => {
 // --- Main Page Component ---
 const SalesAIAgentDashboardPage: React.FC = () => {
     const [view, setView] = useState<View>('training'); // Default to training view
-    // Stubs for inbox view functionality
     const [kpis, setKpis] = useState<SalesKpis | null>(null);
     const [loading, setLoading] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const [selectedRow, setSelectedRow] = useState<SalesRow | null>(null);
-
-    return (
-        <div className="space-y-6">
+    
+    const pageContent = (
+        <>
             {notification && <ActionNotification message={notification.message} type={notification.type} />}
             <SalesHero kpis={kpis} isLoading={loading} isPaused={isPaused} onPauseToggle={() => setIsPaused(!isPaused)} onSync={() => {}} onOpenSettings={() => setIsSettingsOpen(true)} onOpenTraining={() => setView('training')} />
             
@@ -288,6 +275,14 @@ const SalesAIAgentDashboardPage: React.FC = () => {
 
             <SalesDetailDrawer row={selectedRow} onClose={() => setSelectedRow(null)} onAction={() => {}} />
             <SalesSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        </>
+    );
+
+    return (
+        <div className="space-y-6">
+            <IntegrationBanner serviceName="Sales AI" required={['Gmail', 'Calendar']}>
+                {pageContent}
+            </IntegrationBanner>
         </div>
     );
 };
