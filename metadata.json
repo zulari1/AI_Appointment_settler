@@ -1,8 +1,7 @@
 {
-  "name": "Zulari AI Command Center",
-  "description": "A professional SaaS platform for clients to manage enterprise-grade AI automation services, from customer support to lead generation.",
+  "name": "Jarvis Voice Agent",
+  "description": "A minimalist, futuristic, dark-mode-first web UI for a voice agent. Features hands-free mode, multiple input modes, and seamless audio playback.",
   "requestFramePermissions": [
     "microphone"
-  ],
-  "prompt": ""
+  ]
 }

@@ -1,168 +1,151 @@
-
-
-
-import React, { useState, useEffect, ReactNode } from 'react';
-import { HashRouter, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import DashboardPage from './pages/DashboardPage';
-import ErrorBoundary from './components/ErrorBoundary';
-
-// AI Service Pages
-import ServicesHubPage from './pages/services/ServicesHubPage';
-import ResearchAgentPage from './pages/ResearchAgentPage';
-import WebAssistantServicePage from './pages/WebAssistantServicePage';
-import CustomerSupportAIDashboardPage from './pages/CustomerSupportAIDashboardPage';
-import SalesAIAgentDashboardPage from './pages/SalesAIAgentDashboardPage';
-import LeadGenerationPage from './pages/leadgen'; // New Core Lead Gen
-import CustomSolutionPage from './pages/CustomSolutionPage';
-import CalendarAIPage from './pages/CalendarAIPage';
-import CRMDashboardPage from './pages/CRMDashboardPage';
-import InfluencerResearchPage from './pages/InfluencerResearchPage';
-import SEOPage from './pages/services/SEOPage';
-import AiReadinessAuditPage from './pages/services/AiReadinessAuditPage';
-
-
-// Microservices Pages
-import MicroservicesHubPage from './pages/microservices/MicroservicesHubPage';
-import WebsiteScorecardPage from './pages/microservices/WebsiteScorecardPage';
-import EmailRewritePage from './pages/microservices/audit/EmailRewritePage';
-import StrategyCallPage from './pages/microservices/StrategyCallPage';
-import SimulatorPage from './pages/microservices/SimulatorPage';
-import MiniLeadGenPage from './pages/microservices/MiniLeadGenPage';
-
-
-// Management Pages
-import TeamPage from './pages/management/TeamPage';
-import DocumentsPage from './pages/management/DocumentsPage';
-import EmailTemplatesPage from './pages/management/EmailTemplatesPage';
-import IntegrationsPage from './pages/management/IntegrationsPage';
-import SettingsPage from './pages/management/SettingsPage';
-import BillingPage from './pages/management/BillingPage';
-
-// Resources Pages
-import KnowledgeBasePage from './pages/resources/KnowledgeBasePage';
-import TrainingPage from './pages/resources/TrainingPage';
-import SupportChatPage from './pages/resources/SupportChatPage';
-import ContactPage from './pages/resources/ContactPage';
-
-// Other Pages
-import OAuthCallbackPage from './pages/OAuthCallbackPage';
-import AiAssistant from './components/AiAssistant';
-import { useAuth } from './hooks/useAuth';
-import { IntegrationsProvider } from './hooks/useIntegrations';
-
-// FIX: Resolve ambiguous children prop error on ProtectedRoute by rewriting it as a standard functional component instead of using React.FC, which makes props more explicit and avoids potential issues with implicit children types.
-const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-    const { loading, hasAccess } = useAuth();
-    const navigate = useNavigate();
-    const [ready, setReady] = useState(false);
-
-    useEffect(() => {
-        // compute hasAccess only after user and permission checks complete
-        if (typeof hasAccess === 'boolean') setReady(true);
-    }, [hasAccess]);
-
-    useEffect(() => {
-        if (!ready) return; // WAIT until readiness
-        if (hasAccess === false) {
-            navigate('/dashboard', { replace: true });
-        }
-    }, [ready, hasAccess, navigate]);
-
-    if (loading || !ready || hasAccess !== true) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
-            </div>
-        );
-    }
-
-    return <>{children}</>;
-};
-
-const MainLayout: React.FC = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-
-    return (
-        <ErrorBoundary>
-            <div className="flex h-screen bg-dark-bg text-dark-text">
-                <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <Header setSidebarOpen={setSidebarOpen} />
-                    <main className="flex-1 overflow-x-hidden overflow-y-auto bg-dark-bg p-4 md:p-8">
-                        <Routes>
-                            <Route path="/" element={<DashboardPage />} />
-                            
-                            {/* Core AI Services */}
-                            <Route path="/services" element={<ServicesHubPage />} />
-                            <Route path="/services/research-ai" element={<ResearchAgentPage />} />
-                            <Route path="/services/web-ai" element={<WebAssistantServicePage />} />
-                            <Route path="/services/support-ai" element={<CustomerSupportAIDashboardPage />} />
-                            <Route path="/services/sales-ai" element={<SalesAIAgentDashboardPage />} />
-                            <Route path="/services/lead-gen" element={<Navigate to="/leadgen" />} />
-                            <Route path="/services/custom-solution" element={<CustomSolutionPage />} />
-                            <Route path="/services/calendar-ai" element={<CalendarAIPage />} />
-                            <Route path="/services/crm-automation" element={<CRMDashboardPage />} />
-                            <Route path="/services/influencer-research" element={<InfluencerResearchPage />} />
-                            <Route path="/services/seo-optimization" element={<SEOPage />} />
-                            <Route path="/services/ai-readiness-audit" element={<AiReadinessAuditPage />} />
-
-                            {/* New Core Lead Gen Route */}
-                            <Route path="/leadgen/*" element={<LeadGenerationPage />} />
-
-                            {/* Microservices */}
-                            <Route path="/microservices" element={<MicroservicesHubPage />} />
-                            <Route path="/microservices/audit" element={<AiReadinessAuditPage />} />
-                            <Route path="/microservices/scorecard" element={<WebsiteScorecardPage />} />
-                            <Route path="/microservices/email-rewrite" element={<EmailRewritePage />} />
-                            <Route path="/microservices/strategy-call" element={<StrategyCallPage />} />
-                            <Route path="/microservices/simulator" element={<SimulatorPage />} />
-                            <Route path="/microservices/mini-leads/*" element={<ProtectedRoute><MiniLeadGenPage /></ProtectedRoute>} />
-                            
-                            {/* Management */}
-                            <Route path="/management/team" element={<TeamPage />} />
-                            <Route path="/management/documents" element={<DocumentsPage />} />
-                            <Route path="/management/templates" element={<EmailTemplatesPage />} />
-                            <Route path="/management/integrations" element={<IntegrationsPage />} />
-                            <Route path="/management/settings" element={<SettingsPage />} />
-                            <Route path="/management/billing" element={<BillingPage />} />
-
-                            {/* Resources */}
-                            <Route path="/resources/knowledge-base" element={<KnowledgeBasePage />} />
-                            <Route path="/resources/training" element={<TrainingPage />} />
-                            <Route path="/resources/support-chat" element={<SupportChatPage />} />
-                            <Route path="/resources/contact" element={<ContactPage />} />
-                            
-                            {/* Legacy Redirects */}
-                            <Route path="/research-ai" element={<Navigate to="/services/research-ai" />} />
-                            <Route path="/web-ai" element={<Navigate to="/services/web-ai" />} />
-                            <Route path="/support-ai" element={<Navigate to="/services/support-ai" />} />
-                            <Route path="/sales-ai" element={<Navigate to="/services/sales-ai" />} />
-                            <Route path="/lead-gen" element={<Navigate to="/leadgen" />} />
-                            <Route path="/custom-solution" element={<Navigate to="/services/custom-solution" />} />
-
-                            <Route path="*" element={<Navigate to="/" />} />
-                        </Routes>
-                    </main>
-                </div>
-            </div>
-            <AiAssistant />
-        </ErrorBoundary>
-    );
-}
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useChatManager } from './hooks/useChatManager';
+import { usePushToTalkAdvanced } from './hooks/usePushToTalkAdvanced';
+import ChatArea from './components/ChatArea';
+import MicButton from './components/MicButton';
+import Orb, { OrbState } from './components/Orb';
+import ParticlesCanvas from './components/ParticlesCanvas';
+import ChatPanel from './components/ChatPanel';
+import { WAKE_WORD } from './constants';
 
 const App: React.FC = () => {
-    return (
-        <HashRouter>
-            <IntegrationsProvider>
-                <Routes>
-                    <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-                    <Route path="/*" element={<MainLayout />} />
-                </Routes>
-            </IntegrationsProvider>
-        </HashRouter>
-    );
+  const [amplitude, setAmplitude] = useState(0);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [handsFreeMode, setHandsFreeMode] = useState(true);
+  
+  const { messages, sendMessage, isLoading, error, isPlaying, stopPlayback, clearMessages } = useChatManager(setAmplitude);
+
+  const handleTranscriptionResult = useCallback((text: string) => {
+    if (text && !text.toLowerCase().includes(WAKE_WORD)) {
+      setInterimTranscript(text);
+    } else {
+       console.log("Ignoring wake word in transcript.");
+    }
+  }, []);
+
+  const { 
+    isActive, 
+    isRecording, 
+    isProcessing, 
+    error: pttError, 
+    start, 
+    stop 
+  } = usePushToTalkAdvanced(handleTranscriptionResult, {
+      autoRestart: handsFreeMode,
+      idleTimeoutMs: 10000,
+  });
+
+  const handleSend = useCallback((text: string) => {
+    sendMessage(text);
+    setInterimTranscript('');
+  }, [sendMessage]);
+
+  const handleMicToggle = useCallback(() => {
+    if (isPlaying) {
+      stopPlayback();
+      if (isActive) stop();
+      return;
+    }
+    
+    if (isActive) {
+      stop();
+    } else {
+      start();
+    }
+  }, [isActive, isPlaying, start, stop, stopPlayback]);
+
+  // Keyboard shortcut for spacebar
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Space' && !(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) {
+        event.preventDefault();
+        handleMicToggle();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleMicToggle]);
+  
+  const orbState: OrbState = useMemo(() => {
+    if (error || pttError) return 'error';
+    if (isPlaying) return 'speaking';
+    if (isRecording) return 'listening';
+    if (isLoading || isProcessing) return 'processing';
+    return 'idle';
+  }, [error, pttError, isPlaying, isRecording, isLoading, isProcessing]);
+
+  const combinedError = error || pttError;
+  const isMicDisabled = (isLoading || isProcessing) && !isPlaying;
+
+  const handleReset = () => {
+    if (window.confirm("Are you sure you want to clear the conversation history?")) {
+        stop();
+        stopPlayback();
+        clearMessages();
+        setInterimTranscript('');
+    }
+  }
+
+  return (
+    <div className="min-h-screen w-full font-sans text-[#E6EEF6] flex flex-col items-center justify-center relative overflow-hidden bg-[#0A0F1E]">
+        
+      <ParticlesCanvas />
+
+      <div className="absolute top-4 left-4 z-30 flex items-center gap-4">
+        <button onClick={handleReset} className="px-3 py-1 text-xs bg-white/5 border border-white/10 rounded-md hover:bg-white/10 transition-colors">
+            Reset Chat
+        </button>
+        <div className="flex items-center gap-2">
+            <label htmlFor="hands-free-toggle" className="text-xs text-white/60">Hands-Free</label>
+            <button
+                id="hands-free-toggle"
+                role="switch"
+                aria-checked={handsFreeMode}
+                onClick={() => setHandsFreeMode(!handsFreeMode)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${handsFreeMode ? 'bg-cyan-500' : 'bg-gray-600'}`}
+            >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${handsFreeMode ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </button>
+        </div>
+      </div>
+
+
+      <ChatArea
+        messages={messages}
+        error={combinedError}
+      />
+
+      <main className="flex-1 flex flex-col items-center justify-center z-10 w-full px-4">
+        <Orb state={orbState} amplitude={amplitude} size={window.innerWidth < 768 ? 160 : 280} />
+      </main>
+
+      <footer className="w-full p-6 flex flex-col justify-center items-center gap-4 z-20">
+        <ChatPanel 
+          interim={interimTranscript}
+          onSend={handleSend}
+          disabled={isRecording || isProcessing || isLoading || isPlaying}
+        />
+        <MicButton 
+          isListening={isRecording}
+          onToggle={handleMicToggle}
+          disabled={isMicDisabled}
+          isLoading={isLoading || isProcessing}
+          isPlaying={isPlaying}
+        />
+      </footer>
+      
+      <style>{`
+        body {
+          font-family: 'Inter', sans-serif;
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeInUp { animation: fadeInUp 0.5s ease-out forwards; }
+      `}</style>
+    </div>
+  );
 };
 
 export default App;
