@@ -1,6 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 
-export default function ParticlesCanvas() {
+interface ParticlesCanvasProps {
+    density?: number;
+}
+
+export default function ParticlesCanvas({ density = 0.00015 }: ParticlesCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement|null>(null);
   const rafRef = useRef<number| null>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
@@ -31,7 +35,7 @@ export default function ParticlesCanvas() {
 
         particles.length = 0;
         const area = width * height;
-        const count = Math.max(40, Math.floor(area * 0.00015));
+        const count = Math.max(40, Math.floor(area * density));
         for (let i = 0; i < count; i++) {
             particles.push({
               x: Math.random() * width,
@@ -113,7 +117,7 @@ export default function ParticlesCanvas() {
       window.removeEventListener('resize', onResize);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, []);
+  }, [density]);
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 bg-[#0A0F1E]" />;
 }

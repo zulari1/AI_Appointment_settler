@@ -15,10 +15,10 @@ declare const process: {
 // Always load them from secure environment variables on a server or during your build process.
 
 // Securely load environment variables from process.env, with fallbacks for this environment.
-export const N8N_WEBHOOK = process.env.VITE_N8N_WEBHOOK || 'https://atlas-ai-assistant.app.n8n.cloud/webhook/Atlas';
+export const N8N_WEBHOOK = process.env.VITE_N8N_WEBHOOK || 'https://zuluri.app.n8n.cloud/webhook/Atlas';
 export const N8N_TRANSCRIBE_WEBHOOK = process.env.VITE_N8N_TRANSCRIBE_WEBHOOK;
 
-export const GROQ_API_KEY = process.env.VITE_GROQ_API_KEY || "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";
+export const GROQ_API_KEY = process.env.VITE_GROQ_API_KEY || "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";
 export const GROQ_API_URL = process.env.VITE_GROQ_API_URL || 'https://api.groq.com/openai/v1/audio/transcriptions';
 
 // Non-secret constants

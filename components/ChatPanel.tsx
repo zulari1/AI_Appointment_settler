@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface Props {
   interim?: string;
-  onSend: (text: string) => void;
+  onSend: (text: string, file?: File) => void;
   disabled?: boolean;
   autoSendTimeout?: number; // ms
 }
 
-export default function ChatPanel({ interim = '', onSend, disabled=false, autoSendTimeout = 1000 }: Props) {
+export default function ChatPanel({ interim = '', onSend, disabled=false, autoSendTimeout = 2000 }: Props) {
   const [text, setText] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [previewText, setPreviewText] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const timerRef = React.useRef<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!interim) {
@@ -24,21 +26,24 @@ export default function ChatPanel({ interim = '', onSend, disabled=false, autoSe
     
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
-      onSend(interim);
+      onSend(interim, selectedFile ?? undefined);
       setShowPreview(false);
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }, autoSendTimeout);
     
     return () => { if (timerRef.current) window.clearTimeout(timerRef.current); };
-  }, [interim, onSend, autoSendTimeout]);
+  }, [interim, onSend, autoSendTimeout, selectedFile]);
 
   const handleManualSend = () => {
-    if (showPreview) {
+    const textToSend = showPreview ? previewText : text.trim();
+    if (textToSend || selectedFile) {
         if (timerRef.current) window.clearTimeout(timerRef.current);
-        onSend(previewText);
+        onSend(textToSend, selectedFile ?? undefined);
         setShowPreview(false);
-    } else if (text.trim()) {
-        onSend(text.trim());
         setText('');
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -48,12 +53,19 @@ export default function ChatPanel({ interim = '', onSend, disabled=false, autoSe
     setPreviewText('');
   }
 
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setSelectedFile(file);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleManualSend();
     }
   };
+
+  const canSend = !disabled && ((text.trim().length > 0 || !!selectedFile) || (showPreview && (previewText.length > 0 || !!selectedFile)));
 
   return (
     <div className="w-full max-w-xl mx-auto">
@@ -68,8 +80,28 @@ export default function ChatPanel({ interim = '', onSend, disabled=false, autoSe
           </div>
         </div>
       )}
+      
+      {selectedFile && !showPreview && (
+        <div className="mb-2 p-2 rounded-md bg-white/5 text-xs text-white/70 flex justify-between items-center animate-fadeInUp">
+          <span>Attached: {selectedFile.name}</span>
+          <button onClick={() => {
+            setSelectedFile(null);
+            if(fileInputRef.current) fileInputRef.current.value = '';
+          }} className="text-red-400 hover:text-red-300">&times;</button>
+        </div>
+      )}
+
 
       <div className="flex gap-3 items-center">
+        <input ref={fileInputRef} type="file" onChange={handleFilePick} className="hidden" />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="p-3 rounded-lg bg-transparent border border-white/20 text-white/60 hover:text-white hover:border-white/40 disabled:opacity-50"
+          aria-label="Attach file"
+          disabled={disabled}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+        </button>
         <input
           aria-label="Message input"
           value={text}
@@ -79,7 +111,7 @@ export default function ChatPanel({ interim = '', onSend, disabled=false, autoSe
           onKeyDown={handleKeyDown}
           disabled={disabled}
         />
-        <button onClick={handleManualSend} className="px-4 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white disabled:opacity-50" disabled={disabled || (!text.trim() && !showPreview)}>Send</button>
+        <button onClick={handleManualSend} className="px-4 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white disabled:opacity-50" disabled={!canSend}>Send</button>
       </div>
     </div>
   );

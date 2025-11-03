@@ -17,21 +17,47 @@ export type WebhookResponse = {
   imageUrl?: string | null;
 };
 
-export async function sendToWebhook(transcript: string, clientRequestId?: string): Promise<WebhookResponse> {
+/**
+ * Send transcript + client_request_id + optional file to n8n webhook.
+ * If fileBlob is provided, send multipart/form-data. Otherwise send JSON.
+ */
+export async function sendToWebhook(
+  transcript: string,
+  clientRequestId: string,
+  fileBlob?: Blob | File
+): Promise<WebhookResponse> {
   if (!N8N_WEBHOOK) {
     throw new WebhookError('Missing n8n webhook URL. Please set VITE_N8N_WEBHOOK in your environment variables.', 'Unknown');
   }
   try {
-    const body: { transcript: string; client_request_id?: string } = { transcript };
-    if (clientRequestId) {
-      body.client_request_id = clientRequestId;
-    }
+    let res: Response;
 
-    const res = await fetch(N8N_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    if (fileBlob) {
+      // multipart/form-data path
+      const form = new FormData();
+      form.append('transcript', transcript || '');
+      form.append('client_request_id', clientRequestId || '');
+      form.append('file_present', 'true');
+      // The file field is named 'file' for n8n to receive it as a binary property
+      form.append('file', fileBlob, (fileBlob as File).name || 'upload.bin');
+
+      res = await fetch(N8N_WEBHOOK, {
+        method: 'POST',
+        // Do not set Content-Type header for FormData; the browser sets it with the correct boundary
+        body: form,
+      });
+    } else {
+      // JSON path (file: false)
+      res = await fetch(N8N_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript: transcript || '',
+          client_request_id: clientRequestId || '',
+          file: false,
+        }),
+      });
+    }
 
     if (!res.ok) {
         const errorBody = await res.text().catch(() => 'Could not read error body.');
@@ -39,7 +65,7 @@ export async function sendToWebhook(transcript: string, clientRequestId?: string
         if (res.status >= 500) throw new WebhookError(errorMessage, 'Server');
         else throw new WebhookError(errorMessage, 'Network');
     }
-
+    
     const responseText = await res.text();
     if (!responseText.trim()) {
       console.warn("Webhook returned an empty but successful response.");
@@ -58,7 +84,7 @@ export async function sendToWebhook(transcript: string, clientRequestId?: string
         console.error('Failed to parse webhook JSON response. Raw text:', responseText);
         throw new WebhookError('Received an invalid response format from the server.', 'Parse');
     }
-
+    
     const payload = Array.isArray(data) ? data[0] : data;
 
     if (!payload) {
