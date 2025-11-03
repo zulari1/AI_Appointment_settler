@@ -1,19 +1,23 @@
 import React from 'react';
 import type { ChatMessage } from '../types';
 
-interface MessageProps {
-  message: ChatMessage;
-}
-
-const Message: React.FC<MessageProps> = ({ message }) => {
+const Message: React.FC<{ message: ChatMessage }> = ({ message }) => {
   const isUser = message.who === 'user';
-  
+  const speaker = isUser ? 'User' : 'Atlas';
+
   return (
-    <div className={`flex animate-fadeInUp ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-xs px-4 py-3 rounded-2xl font-sans text-sm ${isUser ? 'bg-[#007BFF] text-[#E6EEF6] rounded-br-none' : 'bg-transparent border border-[#00FFFF]/30 text-[#E6EEF6] rounded-bl-none'}`}>
-        <p className="whitespace-pre-wrap">{message.text}</p>
-        <div className="text-[10px] text-[#A8B3C3]/60 mt-2 text-right font-mono">
-          {new Date(message.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+    <div className="animate-fadeInUp text-sm text-[#E6EEF6]">
+      <div className="flex items-start gap-4">
+        <div className={`w-14 flex-shrink-0 text-right font-mono font-semibold ${isUser ? 'text-cyan-400/90' : 'text-white'}`}>
+          {speaker}
+        </div>
+        <div className="flex-1 pt-0.5">
+          <p className="leading-relaxed whitespace-pre-wrap font-sans break-words">
+            {message.text}
+          </p>
+          <div className="text-[10px] text-white/40 mt-1.5 font-mono">
+            {new Date(message.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
         </div>
       </div>
     </div>

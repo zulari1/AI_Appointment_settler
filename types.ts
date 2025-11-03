@@ -3,7 +3,7 @@ export type Mode = 'text' | 'audio' | 'hands-free';
 
 export interface ChatMessage {
   id: string;
-  who: 'user' | 'jarvis';
+  who: 'user' | 'atlas';
   text: string;
   ts: string;
 }

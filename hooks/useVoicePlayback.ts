@@ -8,7 +8,7 @@ import { getClientId } from '../services/clientId';
 export function useVoicePlayback(onAmplitudeChange: (amplitude: number) => void) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
-      const stored = localStorage.getItem('jarvis_chat_v2');
+      const stored = localStorage.getItem('atlas_chat_v2');
       return stored ? JSON.parse(stored) : [];
     } catch { return []; }
   });
@@ -23,9 +23,9 @@ export function useVoicePlayback(onAmplitudeChange: (amplitude: number) => void)
   const lastSentAtRef = useRef<number>(0);
   const failCountRef = useRef(0);
 
-  useEffect(() => { localStorage.setItem('jarvis_chat_v2', JSON.stringify(messages)); }, [messages]);
+  useEffect(() => { localStorage.setItem('atlas_chat_v2', JSON.stringify(messages)); }, [messages]);
 
-  const addMessage = useCallback((who: 'user' | 'jarvis', text: string) => {
+  const addMessage = useCallback((who: 'user' | 'atlas', text: string) => {
     if (who === 'user' && text.trim().length < 1 && messages.length > 0) return;
     const msg: ChatMessage = { id: `${Date.now()}-${Math.random()}`, who, text: text.trim(), ts: new Date().toISOString() };
     setMessages((m) => [...m, msg]);
@@ -33,11 +33,11 @@ export function useVoicePlayback(onAmplitudeChange: (amplitude: number) => void)
   
   const clearMessages = useCallback(() => {
     setMessages([]);
-    localStorage.removeItem('jarvis_chat_v2');
+    localStorage.removeItem('atlas_chat_v2');
   }, []);
 
   const processWebhookResponse = useCallback(async (response: WebhookResponse) => {
-    addMessage('jarvis', response.reply ?? '');
+    addMessage('atlas', response.reply ?? '');
     
     const audioSource = response.audio_url 
       ? playAudioFromUrl(response.audio_url) 
@@ -106,7 +106,7 @@ export function useVoicePlayback(onAmplitudeChange: (amplitude: number) => void)
         userFriendly = err.message;
       }
       setError(userFriendly);
-      addMessage('jarvis', "Sorry — I couldn't process that right now.");
+      addMessage('atlas', "Sorry — I couldn't process that right now.");
     } finally {
       sendingRef.current = false;
       setIsLoading(false);
