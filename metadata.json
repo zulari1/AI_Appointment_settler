@@ -1,7 +1,5 @@
 {
-  "name": "Jarvis Voice Agent",
-  "description": "A minimalist, futuristic, dark-mode-first web UI for a voice agent. Features hands-free mode, multiple input modes, and seamless audio playback.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "name": "AI Web Design Assistant",
+  "description": "A conversational AI agent that guides clients through the process of collecting information needed to build a custom website for their business.",
+  "requestFramePermissions": []
 }

@@ -1,208 +1,269 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useVoicePlayback } from './hooks/useVoicePlayback';
-import { useSpeechRecognition } from './hooks/useSpeechRecognition';
-import ChatArea from './components/ChatArea';
-import MicButton from './components/MicButton';
-import Orb, { OrbState } from './components/Orb';
-import ParticlesCanvas from './components/ParticlesCanvas';
-import ChatPanel from './components/ChatPanel';
-import { WAKE_WORD } from './constants';
+import React, { useState, useEffect, useRef } from 'react';
+import type { FormData, ChatMessage } from './types';
+import { QUESTIONS, STAGES, WEBHOOK_URL } from './constants';
+import ProgressBar from './components/ProgressBar';
+import ChatBubble from './components/ChatBubble';
+import SummaryView from './components/SummaryView';
+import { SendIcon, TypingIndicator } from './components/Icons';
+
+const initialFormData: FormData = {
+  clientName: '',
+  business: { name: '', description: '', mission: '', targetAudience: '', usp: '' },
+  products: { details: '', pricing: '', ecommerce: '' },
+  branding: { logo: '', colors: '', fonts: '', tone: '', vibe: '' },
+  website: { pages: '', features: '', integrations: '' },
+  content: { samples: '', seoKeywords: '', cta: '' },
+  technical: { domain: '', hosting: '', responsive: '' },
+  project: { goals: '', competitors: '', timeline: '', budget: '', additionalInfo: '' },
+};
+
+const getInitialState = () => {
+  try {
+    const savedState = localStorage.getItem('ai-web-design-session');
+    if (savedState) {
+      const { formData, currentQuestionIndex, conversation, isCompleted } = JSON.parse(savedState);
+      if (formData && typeof currentQuestionIndex === 'number' && Array.isArray(conversation)) {
+        return { formData, currentQuestionIndex, conversation, isCompleted };
+      }
+    }
+  } catch (error) {
+    console.error("Failed to parse state from localStorage", error);
+  }
+  return {
+    formData: initialFormData,
+    currentQuestionIndex: 0,
+    conversation: [],
+    isCompleted: false,
+  };
+};
+
 
 const App: React.FC = () => {
-  const [amplitude, setAmplitude] = useState(0);
-  const [interimTranscript, setInterimTranscript] = useState('');
-  const [handsFreeMode, setHandsFreeMode] = useState(true);
-  const [inputLevel, setInputLevel] = useState(0);
-  const [appError, setAppError] = useState<string | null>(null);
+  const initialState = getInitialState();
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(initialState.currentQuestionIndex);
+  const [formData, setFormData] = useState<FormData>(initialState.formData);
+  const [inputValue, setInputValue] = useState('');
+  const [conversation, setConversation] = useState<ChatMessage[]>(initialState.conversation);
+  const [isTyping, setIsTyping] = useState(conversation.length === 0);
+  const [isCompleted, setIsCompleted] = useState(initialState.isCompleted);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
   
-  const { messages, sendMessage, isLoading, error: playbackError, isPlaying, stopPlayback, clearMessages } = useVoicePlayback(setAmplitude);
-
-  const justManuallyStopped = useRef(false);
-
-  const handleTranscriptionResult = useCallback((text: string) => {
-    if (text && !text.toLowerCase().includes(WAKE_WORD)) {
-      setInterimTranscript(text);
-    } else {
-       console.log("Ignoring wake word in transcript.");
-    }
-  }, []);
-
-  const { 
-    isActive, 
-    isRecording, 
-    isProcessing, 
-    error: pttError, 
-    start, 
-    stop 
-  } = useSpeechRecognition(handleTranscriptionResult, {
-      autoRestart: handsFreeMode,
-      onInputLevel: setInputLevel,
-  });
-
-  const handleSend = useCallback((text: string, file?: File) => {
-    if (isActive) {
-      stop(); // Stop listening session when a message is sent
-    }
-    sendMessage(text, file);
-    setInterimTranscript('');
-  }, [sendMessage, isActive, stop]);
-
-  const handleMicToggle = useCallback(() => {
-    if (isPlaying) {
-      stopPlayback();
-      if (isActive) stop();
-      return;
-    }
-    
-    if (isActive) {
-      justManuallyStopped.current = true;
-      stop();
-    } else {
-      justManuallyStopped.current = false;
-      start();
-    }
-  }, [isActive, isPlaying, start, stop, stopPlayback]);
-
-  // Keyboard shortcut for spacebar
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === 'Space' && !(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) {
-        event.preventDefault();
-        handleMicToggle();
-      }
+    const stateToSave = { formData, currentQuestionIndex, conversation, isCompleted };
+    localStorage.setItem('ai-web-design-session', JSON.stringify(stateToSave));
+  }, [formData, currentQuestionIndex, conversation, isCompleted]);
+
+
+  useEffect(() => {
+    const postQuestion = () => {
+        if (currentQuestionIndex < QUESTIONS.length) {
+            const currentQuestion = QUESTIONS[currentQuestionIndex];
+            const isQuestionAlreadyPosted = conversation.some(msg => msg.sender === 'ai' && msg.text === currentQuestion.question);
+            if(!isQuestionAlreadyPosted) {
+              const aiMessage: ChatMessage = {
+                  sender: 'ai',
+                  text: currentQuestion.question,
+                  preview: currentQuestion.preview,
+              };
+              setConversation(prev => [...prev, aiMessage]);
+            }
+        } else {
+            if (!isCompleted) {
+                const finalMessage: ChatMessage = {
+                    sender: 'ai',
+                    text: "Amazing work! That's everything I need. I'm putting together the final blueprint for you to review.",
+                };
+                setConversation(prev => [...prev, finalMessage]);
+                setTimeout(() => setIsCompleted(true), 1500);
+            }
+        }
+        setIsTyping(false);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleMicToggle]);
-  
-  // Effect to manage hands-free session lifecycle
-  useEffect(() => {
-    // Stop recording if AI becomes active or hands-free is turned off
-    if (isActive && (!handsFreeMode || isLoading || isPlaying)) {
-      stop();
+    
+    if (isTyping && !isCompleted) {
+        const typingDuration = conversation.length === 0 ? 1500 : 1000;
+        const timer = setTimeout(postQuestion, typingDuration);
+        return () => clearTimeout(timer);
+    } else if (conversation.length === 0 && currentQuestionIndex === 0 && !isCompleted) {
+        setIsTyping(true);
+    } else {
+        setIsTyping(false);
     }
-    // Start recording if in hands-free, AI is idle, and not already active
-    else if (handsFreeMode && !isLoading && !isPlaying && !isActive) {
-      if (justManuallyStopped.current) {
-        // Don't auto-restart if user just manually stopped. Reset for next time.
-        justManuallyStopped.current = false;
-        return;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestionIndex, isTyping, isCompleted]);
+  
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [conversation, isTyping]);
+
+  const updateFormData = (key: string, value: string) => {
+    setFormData(prev => {
+      const newFormData = JSON.parse(JSON.stringify(prev));
+      if (!key.includes('.')) {
+        newFormData[key] = value;
+        return newFormData;
       }
-      const timer = setTimeout(() => start(), 500); // Add a small delay for smoother transition
-      return () => clearTimeout(timer);
+      let current = newFormData;
+      const parts = key.split('.');
+      for (let i = 0; i < parts.length - 1; i++) {
+        current = current[parts[i]] = current[parts[i]] || {};
+      }
+      current[parts[parts.length - 1]] = value;
+      return newFormData;
+    });
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isTyping || isCompleted) return;
+
+    const currentQuestion = QUESTIONS[currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    const userMessage: ChatMessage = { sender: 'user', text: inputValue };
+    updateFormData(currentQuestion.id, inputValue);
+
+    let reinforcementText = currentQuestion.reinforcement;
+    if (inputValue.length < 25) {
+        reinforcementText = reinforcementText.replace('{value}', `"${inputValue}"`);
+    } else {
+        reinforcementText = reinforcementText.replace('{value}', 'That');
     }
-  }, [handsFreeMode, isLoading, isPlaying, isActive, start, stop]);
-
-
-  // Low input error
-  useEffect(() => {
-    let timer: number;
-    if (isRecording && inputLevel < 0.001) {
-      timer = window.setTimeout(() => setAppError('No audio input detected. Check mic mute or volume.'), 3000);
-    } else if (appError === 'No audio input detected. Check mic mute or volume.') {
-      setAppError(null);
-    }
-    return () => clearTimeout(timer);
-  }, [isRecording, inputLevel, appError]);
-
-
-  const orbState: OrbState = useMemo(() => {
-    if (appError || playbackError || pttError) return 'error';
-    if (isPlaying) return 'speaking';
-    if (isRecording) return 'listening';
-    if (isLoading || isProcessing) return 'processing';
-    return 'idle';
-  }, [appError, playbackError, pttError, isPlaying, isRecording, isLoading, isProcessing]);
-
-  const combinedError = appError || playbackError || pttError;
-  const isMicDisabled = (isLoading || isProcessing) && !isPlaying;
-
-  const handleReset = () => {
-    if (window.confirm("Are you sure you want to end the session and clear the conversation history?")) {
-        stop();
-        stopPlayback();
-        clearMessages();
-        setInterimTranscript('');
-        setAppError(null);
-    }
-  }
+    const aiReinforcementMessage: ChatMessage = { sender: 'ai', text: reinforcementText };
+    
+    setConversation(prev => [...prev, userMessage, aiReinforcementMessage]);
+    setInputValue('');
+    setCurrentQuestionIndex(prev => prev + 1);
+    setIsTyping(true);
+  };
   
-  const isMobile = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 768, []);
+  const handleConfirmSubmit = async () => {
+    setIsSubmitting(true);
+    setError(null);
+
+    const payload = {
+      client_name: formData.clientName,
+      business_type: "Book Depot",
+      business_details: formData.business,
+      products_and_commerce: formData.products,
+      branding: formData.branding,
+      website_structure: formData.website,
+      content_strategy: formData.content,
+      technical_preferences: formData.technical,
+      project_goals_and_logistics: formData.project,
+    };
+
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Submission failed: ${response.statusText}. Details: ${errorData}`);
+      }
+      
+      localStorage.removeItem('ai-web-design-session');
+      setSubmissionSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = () => {
+    localStorage.removeItem('ai-web-design-session');
+    window.location.reload();
+  };
+  
+  const currentQuestion = QUESTIONS[currentQuestionIndex];
+  const currentStage = isCompleted ? STAGES.length - 1 : (currentQuestion ? currentQuestion.stage : 0);
+
+  if (submissionSuccess) {
+    return (
+        <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="w-full max-w-2xl mx-auto p-8 bg-black/20 backdrop-blur-xl rounded-lg shadow-2xl text-center animate-fade-in border border-white/10">
+                <div className="text-5xl mb-4">🎉</div>
+                <h2 className="text-4xl font-bold font-display text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 mb-4">Success!</h2>
+                <p className="text-lg text-gray-300 mb-8">Your project blueprint has been securely sent to our design team. We're excited to start building your dream website. Expect a preview soon!</p>
+                <button
+                    onClick={handleEdit}
+                    className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                >
+                    Start a New Project
+                </button>
+            </div>
+        </div>
+    );
+  }
 
   return (
-    <div className="h-screen w-full font-sans text-[#E6EEF6] relative overflow-hidden bg-[#0A0F1E] flex flex-col">
-        
-      <ParticlesCanvas density={isMobile ? 0.000075 : 0.00015} />
-
-      <div className="absolute top-4 left-4 z-30 flex items-center gap-4">
-        <button onClick={handleReset} className="px-3 py-1 text-xs bg-white/5 border border-white/10 rounded-md hover:bg-white/10 transition-colors">
-            End Session
-        </button>
-        <div className="flex items-center gap-2">
-            <label htmlFor="hands-free-toggle" className="text-xs text-white/60">Hands-Free</label>
-            <button
-                id="hands-free-toggle"
-                role="switch"
-                aria-checked={handsFreeMode}
-                onClick={() => {
-                  setHandsFreeMode(!handsFreeMode);
-                  justManuallyStopped.current = false; // Reset manual stop on mode toggle
-                }}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${handsFreeMode ? 'bg-cyan-500' : 'bg-gray-600'}`}
-            >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${handsFreeMode ? 'translate-x-5' : 'translate-x-0.5'}`} />
-            </button>
-        </div>
-      </div>
-      
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col md:flex-row-reverse min-h-0">
-        {/* Orb Container */}
-        <main className="flex-1 relative flex flex-col items-center justify-center z-10 w-full px-4 pointer-events-none">
-          <Orb state={orbState} amplitude={amplitude} size={isMobile ? 160 : 280} />
-        </main>
-        
-        {/* Chat & Controls Container */}
-        <aside className="
-          flex flex-col z-20 pointer-events-auto
-          md:w-full md:max-w-sm md:h-full 
-          max-h-[45vh] md:max-h-full
-          md:border-r md:border-white/10
-          bg-gradient-to-t from-[#0A0F1E] via-[#0A0F1E] to-transparent md:from-transparent md:via-transparent
-        ">
-            <div className="flex-1 min-h-0 px-6 md:pt-20">
-                <ChatArea
-                    messages={messages}
-                    error={combinedError}
-                />
+    <div className="flex flex-col h-screen p-4 justify-center items-center">
+      <div className="w-full max-w-3xl h-full sm:h-[95vh] sm:max-h-[800px] flex flex-col bg-black/20 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
+        <header className="p-4 sm:p-6 border-b border-white/10 flex-shrink-0">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-xl sm:text-2xl font-bold font-display text-gray-100">AI Web Design Assistant</h1>
+            <p className="text-sm text-blue-300">For Your Book Depot Store</p>
+            <div className="mt-4">
+              <ProgressBar stages={STAGES} currentStage={currentStage} />
             </div>
-            <footer className="w-full p-6 pt-2 flex flex-col justify-center items-center gap-4 flex-shrink-0">
-                <ChatPanel 
-                    interim={interimTranscript}
-                    onSend={handleSend}
-                    disabled={isRecording || isProcessing || isLoading || isPlaying}
-                />
-                <MicButton 
-                    isListening={isRecording}
-                    onToggle={handleMicToggle}
-                    disabled={isMicDisabled}
-                    isLoading={isLoading || isProcessing}
-                    isPlaying={isPlaying}
-                />
-            </footer>
-        </aside>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="max-w-4xl mx-auto">
+            {isCompleted ? (
+              <SummaryView 
+                data={formData} 
+                onConfirm={handleConfirmSubmit}
+                onEdit={handleEdit}
+                isSubmitting={isSubmitting}
+                error={error}
+              />
+            ) : (
+              <div className="space-y-6">
+                {conversation.map((msg, index) => (
+                  <ChatBubble key={index} message={msg} />
+                ))}
+                {isTyping && <TypingIndicator />}
+                <div ref={chatEndRef} />
+              </div>
+            )}
+          </div>
+        </main>
+
+        {!isCompleted && (
+          <footer className="p-4 bg-gray-900/30 border-t border-white/10 flex-shrink-0">
+            <form onSubmit={handleFormSubmit} className="max-w-4xl mx-auto flex items-center gap-3">
+              <input
+                type={currentQuestion?.type === 'email' ? 'email' : 'text'}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder={isTyping ? "AI is typing..." : currentQuestion?.placeholder || "Type your answer..."}
+                className="flex-1 w-full px-5 py-3 text-gray-200 bg-black/30 backdrop-blur-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-gray-500 border border-transparent focus:border-blue-500"
+                autoFocus
+                disabled={isTyping}
+              />
+              <button
+                type="submit"
+                disabled={isTyping || !inputValue.trim()}
+                className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full hover:scale-110 transition-transform disabled:opacity-50 disabled:scale-100"
+                aria-label="Send message"
+              >
+                <SendIcon />
+              </button>
+            </form>
+          </footer>
+        )}
       </div>
-      
-      <style>{`
-        body {
-          font-family: 'Inter', sans-serif;
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeInUp { animation: fadeInUp 0.5s ease-out forwards; }
-      `}</style>
+       <p className="text-center text-xs text-gray-500 mt-4">✨ Guided by Atlas AI – Designed with Soul and Precision</p>
     </div>
   );
 };
