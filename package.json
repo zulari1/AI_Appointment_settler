@@ -1,5 +1,5 @@
 {
-  "name": "ai-web-design-assistant",
+  "name": "atlas-appointment-settler",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,8 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "uuid": "^13.0.0",
+    "react-dom": "^19.2.3",
+    "react": "^19.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

@@ -1,5 +1,7 @@
 {
-  "name": "AI Web Design Assistant",
-  "description": "A conversational AI agent that guides clients through the process of collecting information needed to build a custom website for their business.",
-  "requestFramePermissions": []
+  "name": "Atlas Appointment Settler",
+  "description": "An intelligent, voice-enabled appointment scheduling assistant.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

@@ -1,271 +1,528 @@
-import React, { useState, useEffect, useRef } from 'react';
-import type { FormData, ChatMessage } from './types';
-import { QUESTIONS, STAGES, WEBHOOK_URL } from './constants';
-import ProgressBar from './components/ProgressBar';
-import ChatBubble from './components/ChatBubble';
-import SummaryView from './components/SummaryView';
-import { SendIcon, TypingIndicator } from './components/Icons';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid'; 
+import { Lead, Message, WebhookPayload, AppointmentDetails } from './types';
+import { postToWebhook } from './services/api';
+import { LeadForm } from './components/LeadForm';
+import { MessageBubble } from './components/MessageBubble';
+import { Loader } from './components/ui/Loader';
+import { AppointmentSummary } from './components/AppointmentSummary';
+import { VoiceService, VoiceStatus } from './services/voiceService';
 
-const initialFormData: FormData = {
-  clientName: '',
-  business: { name: '', description: '', mission: '', targetAudience: '', usp: '' },
-  products: { details: '', pricing: '', ecommerce: '' },
-  branding: { logo: '', colors: '', fonts: '', tone: '', vibe: '' },
-  website: { pages: '', features: '', integrations: '' },
-  content: { samples: '', seoKeywords: '', cta: '' },
-  technical: { domain: '', hosting: '', responsive: '' },
-  project: { goals: '', competitors: '', timeline: '', budget: '', additionalInfo: '' },
-};
+// Helper for unique IDs for messages (UI only)
+const generateId = () => Math.random().toString(36).substring(2, 9);
 
-const getInitialState = () => {
-  try {
-    const savedState = localStorage.getItem('ai-web-design-session');
-    if (savedState) {
-      const { formData, currentQuestionIndex, conversation, isCompleted } = JSON.parse(savedState);
-      if (formData && typeof currentQuestionIndex === 'number' && Array.isArray(conversation)) {
-        return { formData, currentQuestionIndex, conversation, isCompleted };
-      }
-    }
-  } catch (error) {
-    console.error("Failed to parse state from localStorage", error);
-  }
-  return {
-    formData: initialFormData,
-    currentQuestionIndex: 0,
-    conversation: [],
-    isCompleted: false,
-  };
-};
-
-
-const App: React.FC = () => {
-  const initialState = getInitialState();
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(initialState.currentQuestionIndex);
-  const [formData, setFormData] = useState<FormData>(initialState.formData);
-  const [inputValue, setInputValue] = useState('');
-  const [conversation, setConversation] = useState<ChatMessage[]>(initialState.conversation);
-  const [isTyping, setIsTyping] = useState(conversation.length === 0);
-  const [isCompleted, setIsCompleted] = useState(initialState.isCompleted);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionSuccess, setSubmissionSuccess] = useState(false);
+export default function App() {
+  // --- State ---
+  const [sessionId] = useState(() => uuidv4()); // Persist session ID for the component's lifecycle
+  const [lead, setLead] = useState<Lead | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [urlParams, setUrlParams] = useState<Record<string, string>>({});
   
-  useEffect(() => {
-    const stateToSave = { formData, currentQuestionIndex, conversation, isCompleted };
-    localStorage.setItem('ai-web-design-session', JSON.stringify(stateToSave));
-  }, [formData, currentQuestionIndex, conversation, isCompleted]);
+  // Audio State
+  const [currentAudioId, setCurrentAudioId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Voice Agent State
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('disconnected');
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const voiceServiceRef = useRef<VoiceService | null>(null);
 
+  // Appointment State
+  const [isReadyToConfirm, setIsReadyToConfirm] = useState(false);
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [appointmentDetails, setAppointmentDetails] = useState<{datetime?: string, channel?: string}>({});
+
+  // --- Initialization ---
+  
+  // Theme initialization
   useEffect(() => {
-    const postQuestion = () => {
-        if (currentQuestionIndex < QUESTIONS.length) {
-            const currentQuestion = QUESTIONS[currentQuestionIndex];
-            const isQuestionAlreadyPosted = conversation.some(msg => msg.sender === 'ai' && msg.text === currentQuestion.question);
-            if(!isQuestionAlreadyPosted) {
-              const aiMessage: ChatMessage = {
-                  sender: 'ai',
-                  text: currentQuestion.question,
-                  preview: currentQuestion.preview,
-              };
-              setConversation(prev => [...prev, aiMessage]);
-            }
-        } else {
-            if (!isCompleted) {
-                const finalMessage: ChatMessage = {
-                    sender: 'ai',
-                    text: "Amazing work! That's everything I need. I'm putting together the final blueprint for you to review.",
-                };
-                setConversation(prev => [...prev, finalMessage]);
-                setTimeout(() => setIsCompleted(true), 1500);
-            }
-        }
-        setIsTyping(false);
-    };
-    
-    if (isTyping && !isCompleted) {
-        const typingDuration = conversation.length === 0 ? 1500 : 1000;
-        const timer = setTimeout(postQuestion, typingDuration);
-        return () => clearTimeout(timer);
-    } else if (conversation.length === 0 && currentQuestionIndex === 0 && !isCompleted) {
-        setIsTyping(true);
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setTheme('dark');
+      document.documentElement.classList.add('dark');
     } else {
-        setIsTyping(false);
+      setTheme('light');
+      document.documentElement.classList.remove('dark');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestionIndex, isTyping, isCompleted]);
-  
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [conversation, isTyping]);
+  }, []);
 
-  const updateFormData = (key: string, value: string) => {
-    setFormData(prev => {
-      const newFormData = JSON.parse(JSON.stringify(prev));
-      if (!key.includes('.')) {
-        newFormData[key] = value;
-        return newFormData;
-      }
-      let current = newFormData;
-      const parts = key.split('.');
-      for (let i = 0; i < parts.length - 1; i++) {
-        current = current[parts[i]] = current[parts[i]] || {};
-      }
-      current[parts[parts.length - 1]] = value;
-      return newFormData;
+  const toggleTheme = () => {
+    if (theme === 'light') {
+      setTheme('dark');
+      localStorage.setItem('theme', 'dark');
+      document.documentElement.classList.add('dark');
+    } else {
+      setTheme('light');
+      localStorage.setItem('theme', 'light');
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  useEffect(() => {
+    // Parse URL Params
+    const params = new URLSearchParams(window.location.search);
+    const extractedParams: Record<string, string> = {};
+    params.forEach((value, key) => {
+      extractedParams[key] = value;
     });
-  };
+    setUrlParams(extractedParams);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isTyping || isCompleted) return;
+    const email = params.get('email');
+    const name = params.get('name');
+    const cid = params.get('cid');
 
-    const currentQuestion = QUESTIONS[currentQuestionIndex];
-    if (!currentQuestion) return;
-
-    const userMessage: ChatMessage = { sender: 'user', text: inputValue };
-    updateFormData(currentQuestion.id, inputValue);
-
-    let reinforcementText = currentQuestion.reinforcement;
-    if (inputValue.length < 25) {
-        reinforcementText = reinforcementText.replace('{value}', `"${inputValue}"`);
-    } else {
-        reinforcementText = reinforcementText.replace('{value}', 'That');
+    if (email && name) {
+      const initialLead: Lead = { 
+        email, 
+        name, 
+        cid: cid || undefined, 
+        firstVisitTimestamp: Date.now() 
+      };
+      setLead(initialLead);
+      // Pass extractedParams explicitly because state update is async/not visible in this closure immediately
+      startSession(initialLead, extractedParams);
     }
-    const aiReinforcementMessage: ChatMessage = { sender: 'ai', text: reinforcementText };
     
-    setConversation(prev => [...prev, userMessage, aiReinforcementMessage]);
-    setInputValue('');
-    setCurrentQuestionIndex(prev => prev + 1);
-    setIsTyping(true);
-  };
-  
-  const handleConfirmSubmit = async () => {
-    setIsSubmitting(true);
-    setError(null);
-
-    const payload = {
-      client_name: formData.clientName,
-      business_type: "Book Depot",
-      business_details: formData.business,
-      products_and_commerce: formData.products,
-      branding: formData.branding,
-      website_structure: formData.website,
-      content_strategy: formData.content,
-      technical_preferences: formData.technical,
-      project_goals_and_logistics: formData.project,
+    // Cleanup voice service on unmount
+    return () => {
+        if (voiceServiceRef.current) {
+            voiceServiceRef.current.stopRecording();
+        }
     };
+  }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading, liveTranscript]);
+
+  // --- Logic ---
+
+  const handleAudioEnd = () => {
+    setCurrentAudioId(null);
+  };
+
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setCurrentAudioId(null);
+    }
+  }, []);
+
+  const playAudio = useCallback((source: string, messageId: string, isUrl: boolean = false) => {
+    stopAudio(); // Stop any currently playing audio
 
     try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`Submission failed: ${response.statusText}. Details: ${errorData}`);
+      let url = source;
+      
+      if (!isUrl) {
+          // It's base64, convert to blob url
+          const binaryString = window.atob(source);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'audio/wav' });
+          url = URL.createObjectURL(blob);
       }
       
-      localStorage.removeItem('ai-web-design-session');
-      setSubmissionSuccess(true);
+      const audio = new Audio(url);
+      audio.onended = handleAudioEnd;
+      
+      audioRef.current = audio;
+      
+      // Intentional delay for realism
+      setTimeout(() => {
+        audio.play().catch(e => console.warn("Autoplay prevented:", e));
+        setCurrentAudioId(messageId);
+      }, 300);
+      
+    } catch (e) {
+      console.error("Audio playback error", e);
+    }
+  }, [stopAudio]);
+
+  // --- Voice Logic ---
+
+  const toggleVoiceMode = async () => {
+      if (voiceStatus === 'connected' || voiceStatus === 'connecting') {
+          voiceServiceRef.current?.stopRecording();
+          setIsVoiceActive(false);
+          setLiveTranscript('');
+      } else {
+          // Start
+          setIsVoiceActive(true);
+          voiceServiceRef.current = new VoiceService({
+              onStatusChange: (status) => setVoiceStatus(status),
+              onError: (err) => setError(err),
+              onPartialTranscript: (text) => {
+                  setLiveTranscript(text);
+                  // Barge-in: User is speaking, stop AI
+                  if (audioRef.current && !audioRef.current.paused) {
+                      stopAudio();
+                  }
+              },
+              onFinalTranscript: (text) => {
+                  setLiveTranscript('');
+                  handleSendMessage(text); // Send the message automatically
+              }
+          });
+          await voiceServiceRef.current.startRecording();
+      }
+  };
+
+
+  const startSession = async (currentLead: Lead, paramsOverride?: Record<string, string>) => {
+    setIsLoading(true);
+    try {
+      // Streamlined Payload: No conversation history, just session Start signal
+      const payload: WebhookPayload = {
+        sessionId: sessionId,
+        lead: currentLead,
+        session_start: true,
+        urlParams: paramsOverride || urlParams,
+        meta: {
+          source: 'email_link',
+          userAgent: navigator.userAgent,
+          pageUrl: window.location.href
+        }
+      };
+
+      const response = await postToWebhook(payload);
+      processResponse(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+      setError("Unable to connect to Atlas. Please refresh.");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  const handleEdit = () => {
-    localStorage.removeItem('ai-web-design-session');
-    window.location.reload();
+  const extractDetailsFromText = (text: string) => {
+    // Basic heuristics for demo purposes if backend data isn't available
+    const timeRegex = /\b(?:1[0-2]|0?[1-9])(?::[0-5][0-9])?\s*(?:AM|PM|am|pm)\b/i;
+    const dayRegex = /\b(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b/i;
+    const dateRegex = /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?\b/i;
+    // Channels
+    const zoomRegex = /zoom/i;
+    const meetRegex = /google\s?meet/i;
+    const phoneRegex = /phone|call/i;
+    
+    let datetime = '';
+    const dayMatch = text.match(dayRegex);
+    const dateMatch = text.match(dateRegex);
+    const timeMatch = text.match(timeRegex);
+    
+    if (dayMatch) datetime += dayMatch[0] + ' ';
+    if (dateMatch) datetime += dateMatch[0] + ' ';
+    if (timeMatch) datetime += timeMatch[0];
+    
+    let channel = '';
+    if (zoomRegex.test(text)) channel = 'Zoom';
+    else if (meetRegex.test(text)) channel = 'Google Meet';
+    else if (phoneRegex.test(text)) channel = 'Phone Call';
+    
+    return { 
+        datetime: datetime.trim() || undefined,
+        channel: channel || undefined
+    };
   };
-  
-  const currentQuestion = QUESTIONS[currentQuestionIndex];
-  const currentStage = isCompleted ? STAGES.length - 1 : (currentQuestion ? currentQuestion.stage : 0);
 
-  if (submissionSuccess) {
-    return (
-        <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="w-full max-w-2xl mx-auto p-8 bg-black/20 backdrop-blur-xl rounded-lg shadow-2xl text-center animate-fade-in border border-white/10">
-                <div className="text-5xl mb-4">🎉</div>
-                <h2 className="text-4xl font-bold font-display text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 mb-4">Success!</h2>
-                <p className="text-lg text-gray-300 mb-8">Your project blueprint has been securely sent to our design team. We're excited to start building your dream website. Expect a preview soon!</p>
-                <button
-                    onClick={handleEdit}
-                    className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-                >
-                    Start a New Project
-                </button>
-            </div>
-        </div>
-    );
+  const processResponse = (responseItems: any[]) => {
+    const newMessages: Message[] = [];
+    let foundDetails: {datetime?: string, channel?: string} = {};
+    
+    responseItems.forEach((item, index) => {
+      const msg: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: item.transcript,
+        audioBase64: item.audioBase64,
+        imageUrl: item.imageUrl,
+        timestamp: Date.now() + index * 100
+      };
+      newMessages.push(msg);
+
+      // Check for backend provided details or extract from text
+      if (item.extracted_data) {
+          foundDetails = { ...foundDetails, ...item.extracted_data };
+      } else {
+          // Fallback extraction
+          const extracted = extractDetailsFromText(item.transcript);
+          if (extracted.datetime) foundDetails.datetime = extracted.datetime;
+          if (extracted.channel) foundDetails.channel = extracted.channel;
+      }
+
+      // Check for confirmation flag or keyword
+      if (item.requires_confirmation || item.transcript.toLowerCase().includes('ready to confirm')) {
+        setIsReadyToConfirm(true);
+      }
+    });
+
+    // Merge new details with existing ones
+    if (foundDetails.datetime || foundDetails.channel) {
+        setAppointmentDetails(prev => ({ ...prev, ...foundDetails }));
+    }
+
+    setMessages(prev => [...prev, ...newMessages]);
+
+    // Autoplay the last message if it has audio
+    // Supports both Base64 (legacy/default) and URL (if provided by new backend logic)
+    const lastMsg = newMessages[newMessages.length - 1];
+    
+    // Check if item has audioUrl specifically (from prompt requirement) or falls back to Base64
+    const audioUrl = responseItems[responseItems.length - 1]?.audioUrl;
+    
+    if (audioUrl) {
+         playAudio(audioUrl, lastMsg.id, true);
+    } else if (lastMsg && lastMsg.audioBase64) {
+         playAudio(lastMsg.audioBase64, lastMsg.id, false);
+    }
+  };
+
+  const handleSendMessage = async (text: string = inputText) => {
+    if (!text.trim() || !lead) return;
+
+    // Interrupt AI if speaking
+    stopAudio();
+
+    const userMsg: Message = {
+      id: generateId(),
+      role: 'user',
+      content: text,
+      timestamp: Date.now()
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInputText(''); // Clear input if it came from text box
+    setIsLoading(true);
+
+    try {
+      // Streamlined Payload: Only sending the latest message
+      const payload: WebhookPayload = {
+        sessionId: sessionId,
+        lead,
+        message: userMsg.content, // JUST the new message
+        urlParams: urlParams,
+        meta: {
+           source: isVoiceActive ? 'voice_agent' : 'chat_interface',
+           userAgent: navigator.userAgent,
+           pageUrl: window.location.href
+        }
+      };
+
+      const response = await postToWebhook(payload);
+      processResponse(response);
+
+    } catch (err) {
+      setError("Something went wrong. Please try sending again.");
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleConfirmAppointment = async () => {
+    if (!lead) return;
+    setIsLoading(true);
+    stopAudio();
+    
+    try {
+       const payload: WebhookPayload = {
+        sessionId: sessionId,
+        lead,
+        action: 'confirm_appointment',
+        urlParams: urlParams,
+        meta: { source: 'summary_card', userAgent: navigator.userAgent, pageUrl: window.location.href }
+      };
+      
+      const response = await postToWebhook(payload);
+      processResponse(response);
+      setIsConfirmed(true);
+      setIsReadyToConfirm(false);
+    } catch (err) {
+      setError("Failed to confirm. Please tell Atlas manually.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- Render ---
+
+  if (!lead) {
+    // We pass a simple wrapper to allow checking localstorage theme even if LeadForm doesn't have a toggle itself
+    return <LeadForm onSubmit={(l) => { setLead(l); startSession(l); }} />;
   }
 
   return (
-    <div className="flex flex-col h-screen p-4 justify-center items-center">
-      <div className="w-full max-w-3xl h-full sm:h-[95vh] sm:max-h-[800px] flex flex-col bg-black/20 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
-        <header className="p-4 sm:p-6 border-b border-white/10 flex-shrink-0">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-xl sm:text-2xl font-bold font-display text-gray-100">AI Web Design Assistant</h1>
-            <p className="text-sm text-blue-300">For Your Book Depot Store</p>
-            <div className="mt-4">
-              <ProgressBar stages={STAGES} currentStage={currentStage} />
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-900 font-sans transition-colors duration-200">
+      {/* Header */}
+      <header className="flex-none bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-4 py-3 shadow-sm z-10 sticky top-0 transition-colors duration-200">
+        <div className="flex items-center justify-between max-w-2xl mx-auto">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-10 h-10 bg-brand-600 rounded-full flex items-center justify-center text-white shadow-md">
+                 <i className="fas fa-calendar-alt"></i>
+              </div>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full"></div>
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Hi {lead.name.split(' ')[0]}</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Atlas Scheduling Assistant</p>
             </div>
           </div>
-        </header>
+          
+          {/* Theme Toggle */}
+          <button 
+            onClick={toggleTheme}
+            className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-all focus:outline-none"
+            title="Toggle theme"
+          >
+            <i className={`fas ${theme === 'light' ? 'fa-moon' : 'fa-sun'}`}></i>
+          </button>
+        </div>
+      </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="max-w-4xl mx-auto">
-            {isCompleted ? (
-              <SummaryView 
-                data={formData} 
-                onConfirm={handleConfirmSubmit}
-                onEdit={handleEdit}
-                isSubmitting={isSubmitting}
-                error={error}
-              />
-            ) : (
-              <div className="space-y-6">
-                {conversation.map((msg, index) => (
-                  <ChatBubble key={index} message={msg} />
-                ))}
-                {isTyping && <TypingIndicator />}
-                <div ref={chatEndRef} />
-              </div>
-            )}
+      {/* Messages Area */}
+      <main className="flex-1 overflow-y-auto p-4 scroll-smooth">
+        <div className="max-w-2xl mx-auto flex flex-col min-h-full justify-end">
+          {/* Intro Disclaimer */}
+          <div className="text-center my-6">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              Atlas is an AI assistant. <br/>Interactions are recorded for quality purposes.
+            </p>
           </div>
-        </main>
 
-        {!isCompleted && (
-          <footer className="p-4 bg-gray-900/30 border-t border-white/10 flex-shrink-0">
-            <form onSubmit={handleFormSubmit} className="max-w-4xl mx-auto flex items-center gap-3">
-              <input
-                type={currentQuestion?.type === 'email' ? 'email' : 'text'}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder={isTyping ? "AI is typing..." : currentQuestion?.placeholder || "Type your answer..."}
-                className="flex-1 w-full px-5 py-3 text-gray-200 bg-black/30 backdrop-blur-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-gray-500 border border-transparent focus:border-blue-500"
-                autoFocus
-                disabled={isTyping}
-              />
-              <button
-                type="submit"
-                disabled={isTyping || !inputValue.trim()}
-                className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full hover:scale-110 transition-transform disabled:opacity-50 disabled:scale-100"
-                aria-label="Send message"
+          {messages.map((msg) => (
+            <MessageBubble 
+              key={msg.id} 
+              message={msg} 
+              isPlaying={currentAudioId === msg.id}
+              onPlay={() => msg.audioBase64 && playAudio(msg.audioBase64, msg.id)}
+              onPause={stopAudio}
+            />
+          ))}
+          
+          {/* Live Transcript Bubble (Real-time Feedback) */}
+          {liveTranscript && (
+             <div className="flex justify-end mb-4 animate-fade-in-up opacity-70">
+                <div className="bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-white rounded-2xl rounded-tr-none px-4 py-3 max-w-[85%] shadow-sm italic">
+                  <p className="text-sm sm:text-base leading-relaxed">{liveTranscript}...</p>
+                </div>
+              </div>
+          )}
+
+          {isLoading && (
+            <div className="flex justify-start mb-6 animate-fade-in-up">
+               <div className="flex-shrink-0 mr-3 mt-1">
+                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-tr from-brand-500 to-purple-500 rounded-full flex items-center justify-center shadow-md">
+                    <i className="fas fa-robot text-white text-xs sm:text-sm"></i>
+                 </div>
+               </div>
+               <Loader />
+            </div>
+          )}
+          
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg mb-4 text-center border border-red-100 dark:border-red-900/30">
+              {error}
+              <button onClick={() => setError(null)} className="ml-2 underline font-bold">Dismiss</button>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} className="h-4" />
+        </div>
+      </main>
+
+      {/* Sticky Confirm Card */}
+      {(isReadyToConfirm || isConfirmed) && (
+        <div className="flex-none z-20">
+             <AppointmentSummary 
+               onConfirm={handleConfirmAppointment} 
+               isProcessing={isLoading} 
+               details={appointmentDetails} 
+               isConfirmed={isConfirmed}
+             />
+        </div>
+      )}
+
+      {/* Input Area */}
+      <footer className="flex-none bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-3 sm:p-4 z-20 transition-colors duration-200">
+        <div className="max-w-2xl mx-auto relative">
+          
+          {/* Voice Status Indicator */}
+          {isVoiceActive && (
+              <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-brand-600 text-white text-xs px-3 py-1 rounded-full shadow-lg flex items-center space-x-2 animate-bounce">
+                  {voiceStatus === 'connected' ? (
+                       <>
+                         <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                         <span>Listening...</span>
+                       </>
+                  ) : (
+                      <span>Connecting Voice...</span>
+                  )}
+              </div>
+          )}
+
+          {/* Interrupt Button - Absolute positioned above input */}
+          {currentAudioId && (
+            <div className="absolute -top-16 left-1/2 transform -translate-x-1/2">
+              <button 
+                onClick={stopAudio}
+                className="flex items-center space-x-2 bg-gray-900/80 hover:bg-black dark:bg-slate-700/90 dark:hover:bg-slate-600 text-white px-4 py-2 rounded-full backdrop-blur-sm shadow-lg transition-transform hover:scale-105 active:scale-95 border border-white/10"
               >
-                <SendIcon />
+                <i className="fas fa-stop text-red-400"></i>
+                <span className="text-sm font-medium">Interrupt</span>
               </button>
-            </form>
-          </footer>
-        )}
-      </div>
-       <p className="text-center text-xs text-gray-500 mt-4">✨ Guided by Atlas AI – Designed with Soul and Precision</p>
+            </div>
+          )}
+
+          <div className="flex space-x-2 items-end">
+            {/* Mic Button */}
+            <button
+                onClick={toggleVoiceMode}
+                className={`w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition-all shadow-md active:scale-95 ${
+                    isVoiceActive 
+                    ? 'bg-red-500 hover:bg-red-600 text-white ring-4 ring-red-200 dark:ring-red-900' 
+                    : 'bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-600 dark:text-gray-300'
+                }`}
+                title="Speak to Atlas"
+            >
+                <i className={`fas ${isVoiceActive ? 'fa-microphone-slash' : 'fa-microphone'} text-lg`}></i>
+            </button>
+
+            <div className="flex-1 relative">
+                <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
+                placeholder={isVoiceActive ? "Listening..." : (isConfirmed ? "Say thanks or ask more..." : "Type your reply...")}
+                disabled={isLoading}
+                className="w-full bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-0 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-600 transition-all disabled:opacity-60"
+                />
+            </div>
+
+            <button
+              onClick={() => handleSendMessage()}
+              disabled={!inputText.trim() || isLoading}
+              className="bg-brand-600 hover:bg-brand-700 dark:bg-brand-600 dark:hover:bg-brand-500 disabled:bg-gray-300 dark:disabled:bg-slate-600 disabled:text-gray-500 dark:disabled:text-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all active:scale-95 flex-shrink-0"
+            >
+              <i className="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
-};
-
-export default App;
+}

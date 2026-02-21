@@ -1,60 +1,49 @@
-export interface Question {
+export interface Lead {
+  email: string;
+  name: string;
+  cid?: string;
+  firstVisitTimestamp?: number;
+}
+
+export interface Message {
   id: string;
-  stage: number;
-  question: string;
-  reinforcement: string;
-  placeholder: string;
-  type: 'text' | 'textarea' | 'email';
-  preview: string;
+  role: 'system' | 'assistant' | 'user';
+  content: string;
+  audioBase64?: string | null;
+  imageUrl?: string | null;
+  timestamp: number;
 }
 
-export interface FormData {
-  clientName: string;
-  business: {
-    name: string;
-    description: string; // essence
-    mission: string;
-    targetAudience: string;
-    usp: string; // unique selling points
+export interface WebhookPayload {
+  sessionId: string; // Unique ID for the session/conversation
+  lead: Lead;
+  message?: string; // The specific message content being sent (latest only)
+  meta: {
+    source: string;
+    userAgent: string;
+    pageUrl: string;
   };
-  products: {
-    details: string; // types of books, etc.
-    pricing: string;
-    ecommerce: string; // online shopping feature
-  };
-  branding: {
-    logo: string;
-    colors: string;
-    fonts: string;
-    tone: string;
-    vibe: string; // classic & cozy, modern & minimal etc.
-  };
-  website: {
-    pages: string;
-    features: string;
-    integrations: string; // newsletter, etc.
-  };
-  content: {
-    samples: string;
-    seoKeywords: string;
-    cta: string; // call to action
-  };
-  technical: {
-    domain: string;
-    hosting: string;
-    responsive: string;
-  },
-  project: {
-    goals: string;
-    competitors: string;
-    timeline: string;
-    budget: string;
-    additionalInfo: string;
+  urlParams?: Record<string, string>; // All URL parameters from the visit
+  session_start?: boolean;
+  action?: string; // e.g., 'confirm_appointment'
+}
+
+export interface WebhookResponseItem {
+  transcript: string;
+  audioBase64?: string | null;
+  imageUrl?: string | null;
+  requires_confirmation?: boolean; // Optional flag if AI logic supports it
+  extracted_data?: {
+    datetime?: string;
+    channel?: string;
   };
 }
 
-export interface ChatMessage {
-  sender: 'ai' | 'user';
-  text: string;
-  preview?: string;
+export type WebhookResponse = WebhookResponseItem[];
+
+export interface AppointmentDetails {
+  datetime?: string;
+  channel?: string;
+  notes?: string;
+  isReadyToConfirm: boolean;
 }
